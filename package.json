@@ -1,0 +1,18 @@
+{
+  "name": "youtube-summarizer",
+  "version": "1.0.0",
+  "description": "YouTube Channel Summarizer to Google Sheets",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "push": "clasp push",
+    "pull": "clasp pull"
+  },
+  "keywords": ["youtube", "summarizer", "google-sheets", "apps-script"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "dependencies": {}
+}
