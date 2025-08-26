@@ -5,7 +5,7 @@
 * [x] Push to github
 * [x] See what's best to get transcripts (3P web/API, or scrapping)
 * [x] docs: Update Readme to switch to simpler local python setup
-* [ ] build: Switch to simpler local python setup
+* [x] build: Switch to simpler local python setup
 * [ ] feat: Give a video URL and print the summary to stdout
 * [ ] feat: Give a channel URL and print the summary of the first video to stdout
 * [ ] feat: Give a channel URL and also save the summary to a CSV

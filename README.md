@@ -27,7 +27,6 @@ youtube-summarizer/
 ├── main.py                # Main script entry point
 ├── requirements.txt       # Python dependencies
 ├── videos.csv             # Output CSV file (URL, title, summary, ...)
-└── utils.py               # Helper functions (fetching, summarizing, etc.)
 ```
 
 ## 🚀 Local Usage

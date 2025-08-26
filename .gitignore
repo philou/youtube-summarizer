@@ -1,6 +1,6 @@
-node_modules/
+__pycache__/
 .env
 .DS_Store
-clasp.json
-coverage/
+*.pyc
 *.csv
+venv/
