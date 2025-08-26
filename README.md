@@ -1,65 +1,46 @@
-# YouTube Channel Summarizer to Google Sheets
 
-This project automates the process of collecting and summarizing YouTube videos from a channel’s RSS feed. It saves results into a Google Sheet and notifies via email when new videos are available.
+# YouTube Channel Summarizer (Python, Local, CSV)
+
+This project automates the process of collecting and summarizing YouTube videos from a channel’s RSS feed. It downloads video transcripts using Python, summarizes them, and saves the results into a local CSV file. You can run the script manually or schedule it (e.g. with cron).
 
 ## ✨ Features
 
 * Fetch videos from a YouTube channel’s **RSS feed**
-* Download transcripts for each new video (via transcript APIs or scraping fallback)
-* Summarize each video transcript using an LLM
-* Save results (URL, title, summary) into a Google Sheet
-* Send an email digest of new videos:
-
-  * If fewer than 3 videos → list them with summaries
-  * If 3+ videos → also send a **“summary of summaries”**
+* Download transcripts for each new video using the [youtube-transcript-api](https://github.com/jdepoix/youtube-transcript-api)
+* Summarize each video transcript using an LLM (e.g. OpenAI API, optional)
+* Save results (URL, title, summary) into a local CSV file
+* Send an email digest of new videos
 
 ## 🛠 Tech Stack & Tools
 
-* **Google Apps Script**: main runtime (easy Google Sheets integration + email sending)
-* **clasp**: local development tool for Apps Script.
+* **Python 3.9+**
+* **youtube-transcript-api**: fetch YouTube video transcripts
+* **csv**: built-in Python module for CSV file handling
+* **openai**: for transcript summarization
+* **smtplib/email**: for sending email digests
 
-  * Allows you to write, version, and debug your Apps Script locally.
-  * Sync code between GitHub and Google Apps Script.
-* **Google Sheets**: used as the project’s lightweight database.
-* **External transcript fetching**: (still has to be decided)
-
-  * Option A: Use YouTube APIs / existing transcript services with APIs.
-  * Option B: Scrape transcripts from YouTube if APIs not available.
-
-## 📂 Project Structure
-
-```
 youtube-summarizer/
-├── .env.example           # Example environment variables
-├── .gitignore             # Node, clasp, and local ignores
-├── .nvmrc                 # Node version for nvm
+├── .env.example           # Example environment variables (API keys, etc.)
+├── .gitignore             # Python, env, and local ignores
 ├── LICENSE                # MIT License
 ├── README.md              # Project documentation
-├── clasp.json             # clasp config for Apps Script
-├── jest.config.js         # Jest test config
-├── package.json           # npm dependencies and scripts
-├── package-lock.json      # npm lockfile
-├── src/                   # Source code
-│   ├── index.js           # Main entry point
-│   └── sheets.js          # Google Sheets abstraction layer
-└── coverage/              # Jest test coverage output (gitignored)
+├── main.py                # Main script entry point
+├── requirements.txt       # Python dependencies
+├── videos.csv             # Output CSV file (URL, title, summary, ...)
+└── utils.py               # Helper functions (fetching, summarizing, etc.)
 ```
 
-## 🚀 Local Development
-
-To make development easier, we use **npm** for dependency management, **jest** for testing, and **clasp** for syncing code with Google Apps Script.
+## 🚀 Local Usage
 
 ### Prerequisites
-- Node.js (>= 22)
-- npm (ships with Node.js)
-- A Google account with access to Google Apps Script
-- `clasp` installed globally
+- Python 3.9 or newer
+- Install dependencies:
 
-```bash
-npm install -g @google/clasp
-```
+  ```bash
+  pip install -r requirements.txt
+  ```
 
-### Setup
+### Setup & Usage
 
 1. **Clone the repository:**
 
@@ -68,75 +49,30 @@ npm install -g @google/clasp
    cd your-repo
    ```
 
-2. **Install dependencies:**
+2. **Configure environment variables:**
+
+   Copy `.env.example` to `.env` and fill in any required API keys or settings.
+
+3. **Run the script:**
 
    ```bash
-   npm install
+   python main.py
    ```
 
-   This will install Jest and any other project dependencies.
+4. **(Optional) Schedule with cron:**
 
-3. **Login to Google with clasp:**
+   You can schedule the script to run weekly using cron or your OS scheduler.
 
-   ```bash
-   clasp login
-   ```
+## Design Choice: Simplicity & Portability
 
-4. **Create or link to your Apps Script project:**
-
-   * To create a new project:
-
-     ```bash
-     clasp create --type sheets --title "YouTube Summarizer"
-     ```
-   * Or to link to an existing project:
-
-     ```bash
-     clasp clone <script-id>
-     ```
-
-5. **Push code to Apps Script:**
-
-   ```bash
-   clasp push
-   ```
-
-6. **Pull code changes from Apps Script:**
-
-   ```bash
-   clasp pull
-   ```
-
-### Running Locally
-
-Since Apps Script APIs are not available locally, we use an abstraction layer to mock interactions (e.g., spreadsheets).
-You can run local tests with:
-
-```bash
-npm test
-```
-
-### Workflow
-
-* Write and test your logic locally with Jest.
-* Use mocks for spreadsheet or Gmail functions in local tests.
-* Push working code to Apps Script with `clasp push`.
-* Debug directly in Apps Script if needed.
-
-## Design Choice: Local Abstraction Layer
-
-Instead of coding only inside Apps Script, we’ll create a **Google Sheets abstraction** (`sheets.js`).
-
-* When running locally: it can mock the sheet with a CSV file.
-* When deployed: it will connect to the real Google Sheet via Apps Script API.
-
-👉 This allows **faster iteration and testing locally** while still being easy to deploy.
+* No cloud dependencies: everything runs locally.
+* Uses a simple CSV file as the database.
+* Easy to run manually or schedule.
+* Python ecosystem allows easy transcript fetching and future extensibility.
 
 ## 📧 Notifications
 
-* The script checks RSS feed regularly (e.g. via time-based trigger).
-* If new videos are found:
-
-  * They are added to the Google Sheet.
-  * An email digest is sent automatically.
+Whenever the script runs, if new videos are found:
+  * They are added to the CSV file
+  * An email digest is sent, using Python's `smtplib` and `email` modules.
 
