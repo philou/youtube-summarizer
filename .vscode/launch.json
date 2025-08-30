@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": "clwN51nkZAk ${command:pickArgs}"
+            "args": "UCoVoOvIX90IMEZCbBf_ycEA ${command:pickArgs}"
         }
     ]
 }
