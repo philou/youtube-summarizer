@@ -13,7 +13,7 @@ def fetch_transcript(video_id):
     transcript = YouTubeTranscriptApi().fetch(video_id)
     return " ".join([entry['text'] for entry in transcript.to_raw_data()])
 
-def get_latest_video_id_from_rss(rss_url):
+def get_latest_video_info_from_rss(rss_url):
     """Fetch the latest video ID from a YouTube channel RSS feed URL."""
     try:
         resp = requests.get(rss_url)
@@ -27,7 +27,21 @@ def get_latest_video_id_from_rss(rss_url):
         video_id_elem = entry.find('yt:videoId', ns)
         if video_id_elem is None:
             raise ValueError("No videoId found in latest entry.")
-        return video_id_elem.text
+ 
+        title_elem = entry.find('atom:title', ns)
+        if title_elem is None:
+            raise ValueError("No title found in latest entry.")
+ 
+        published_elem = entry.find('atom:published', ns)
+        if published_elem is None:
+            raise ValueError("No published found in latest entry.")
+
+        return {
+            "id": video_id_elem.text,
+            "title": title_elem.text,
+            "published": published_elem.text,
+            "url": f"https://www.youtube.com/watch?v={video_id_elem.text}"
+        }
     except Exception as e:
         raise RuntimeError(f"Failed to parse RSS feed: {e}")
 
@@ -41,6 +55,15 @@ def summarize_text(text, api_key):
     )
     return response.output_text
 
+def summarize_video(transcript, video_info, api_key):
+    summary = summarize_text(transcript, api_key)
+
+    markdown_summary = f"# {video_info['title']}\n\n"
+    markdown_summary += summary
+    markdown_summary += f"\n\n*Published on {video_info['published']} at {video_info['url']}*\n"
+
+    return markdown_summary
+
 def main():
     load_dotenv()
     if len(sys.argv) < 2:
@@ -52,12 +75,12 @@ def main():
         sys.exit(1)
     rss_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
     try:
-        video_id = get_latest_video_id_from_rss(rss_url)
+        video_info = get_latest_video_info_from_rss(rss_url)
     except Exception as e:
         print(f"Error fetching latest video ID: {e}")
         sys.exit(1)
     try:
-        transcript = fetch_transcript(video_id)
+        transcript = fetch_transcript(video_info["id"])
     except Exception as e:
         print(f"Error fetching transcript: {e}")
         sys.exit(1)
@@ -66,11 +89,11 @@ def main():
         print("OPENAI_API_KEY not set in environment.")
         sys.exit(1)
     try:
-        summary = summarize_text(transcript, api_key)
+        summary = summarize_video(transcript, video_info, api_key)
     except Exception as e:
         print(f"Error summarizing transcript: {e}")
         sys.exit(1)
-    print(f"\n--- Video Summary for latest video ({video_id}) ---\n")
+    print(f"\n--- Video Summary for latest video ({video_info["id"]}) ---\n")
     print(summary)
 
 if __name__ == "__main__":
