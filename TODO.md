@@ -10,8 +10,12 @@
 * [x] config: add limits on the openai api usage
 * [x] feat: Give a channel id and use the channel's RSS feed URL to print the summary of the latest video to stdout (see https://webapps.stackexchange.com/questions/111680/how-to-find-channel-rss-feed-on-youtube for how to get the RSS feed url, https://www.youtube.com/feeds/videos.xml?channel_id=UCoVoOvIX90IMEZCbBf_ycEA)
 * [x] feat: change output to markdown, display the title, the date and video url before the video summary
-* [ ] test: is there already a way to test? (cf gpt, an experiment)
-* [ ] test: setup TCR and experiment using the incremental re-test from pypy
+* [ ] test: Add tests for faster feedback loop, as a way to drive the AI
+    * [*] test: Add an e2e test using approvals
+    * [ ] test: Fake the summarizer to make it deterministic
+    * [ ] test: setup TCR and experiment using the incremental re-test from pypy
+    * [ ] test: fake youtube-transcript-api
+    * [ ] test: fake rss download
 * [ ] test: AI experiment to turn tests into Gherkin
 * [ ] test: test for edge and corner cases
 * [ ] feat: Given a channel id, save the summary to an md file in a folder named after the channel id
