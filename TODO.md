@@ -12,8 +12,9 @@
 * [x] feat: change output to markdown, display the title, the date and video url before the video summary
 * [ ] test: Add tests for faster feedback loop, as a way to drive the AI
     * [*] test: Add an e2e test using approvals
-    * [ ] test: Fake the summarizer to make it deterministic
-    * [ ] test: setup TCR and experiment using the incremental re-test from pypy
+    * [*] test: Fake the summarizer to make it deterministic
+    * [ ] test: setup TCR
+    * [ ] test: experiment using the incremental re-test from pypy
     * [ ] test: fake youtube-transcript-api
     * [ ] test: fake rss download
 * [ ] test: AI experiment to turn tests into Gherkin

@@ -3,7 +3,11 @@ from approvaltests import verify
 from approvaltests.reporters import DiffReporter
 import sys
 from io import StringIO
-from main import main
+from main import YoutubeSummarizer, Summarizer
+
+class FakeSummarizer:
+    def summarize_text(self, text):
+        return text[:20] + '...'
 
 class TestYouTubeSummarizerE2E(unittest.TestCase):
     def setUp(self):
@@ -14,7 +18,6 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         # Restore stdout
         sys.stdout = self.held
 
-    @unittest.skip("Until summary is faked and deterministic")
     def test_process_channel_approved(self):
         """Test the full pipeline with actual YouTube and OpenAI services."""
         # Set up test channel ID
@@ -23,7 +26,8 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
 
         # Run the main function
         try:
-            main()
+            YoutubeSummarizer(FakeSummarizer()).main()
+
         except SystemExit:
             pass  # main() calls sys.exit(), which we want to catch
 
