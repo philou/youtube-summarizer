@@ -21,13 +21,15 @@ class Summarizer:
             input = f"Summarize the following transcript:\n{text}"
         )
         return response.output_text
-class YoutubeSummarizer:
 
-    def fetch_transcript(self, video_id):
+
+class YoutubeTranscription:
+    def fetch(self, video_id):
         """Fetch transcript as a single string."""
         transcript = YouTubeTranscriptApi().fetch(video_id)
         return " ".join([entry['text'] for entry in transcript.to_raw_data()])
 
+class YoutubeSummarizer:
     def get_latest_video_info_from_rss(self, rss_url):
         """Fetch the latest video ID from a YouTube channel RSS feed URL."""
         try:
@@ -84,7 +86,7 @@ class YoutubeSummarizer:
             print(f"Error fetching latest video ID: {e}")
             sys.exit(1)
         try:
-            transcript = self.fetch_transcript(video_info["id"])
+            transcript = self.transcript_service.fetch(video_info["id"])
         except Exception as e:
             print(f"Error fetching transcript: {e}")
             sys.exit(1)
@@ -96,8 +98,9 @@ class YoutubeSummarizer:
         print(f"\n--- Video Summary for latest video ({video_info["id"]}) ---\n")
         print(summary)
 
-    def __init__(self, summarizer):
+    def __init__(self, summarizer, transcripter):
         self.summarizer = summarizer
+        self.transcript_service = transcripter
 
 if __name__ == "__main__":
     load_dotenv()
@@ -106,4 +109,7 @@ if __name__ == "__main__":
         print("OPENAI_API_KEY not set in environment.")
         sys.exit(1)
 
-    YoutubeSummarizer(Summarizer(api_key)).main()
+    YoutubeSummarizer(
+        summarizer=Summarizer(api_key),
+        transcripter=YoutubeTranscription()
+    ).main()

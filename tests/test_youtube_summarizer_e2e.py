@@ -3,11 +3,18 @@ from approvaltests import verify
 from approvaltests.reporters import DiffReporter
 import sys
 from io import StringIO
-from main import YoutubeSummarizer, Summarizer
+from main import YoutubeSummarizer, YoutubeTranscription
+from faker import Faker
 
 class FakeSummarizer:
     def summarize_text(self, text):
-        return text[:20] + '...'
+        return text[:30] + '...'
+    
+class FakeTranscription:
+    def fetch(self, video_id):
+        Faker.seed(video_id)
+        fake = Faker()
+        return video_id + " " + fake.text(max_nb_chars=200)
 
 class TestYouTubeSummarizerE2E(unittest.TestCase):
     def setUp(self):
@@ -26,7 +33,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
 
         # Run the main function
         try:
-            YoutubeSummarizer(FakeSummarizer()).main()
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).main()
 
         except SystemExit:
             pass  # main() calls sys.exit(), which we want to catch
