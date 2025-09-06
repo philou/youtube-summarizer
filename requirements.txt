@@ -1,3 +1,4 @@
 youtube-transcript-api
 openai
 faker
+responses

@@ -14,7 +14,8 @@
     * [*] test: Add an e2e test using approvals
     * [*] test: Fake the summarizer to make it deterministic
     * [*] test: fake youtube-transcript-api
-    * [ ] test: fake rss download
+    * [*] test: fake rss download
+    * [ ] test: capture the results without going through patching stdout
 * [ ] test: test for edge and corner cases
 * [ ] feat: Given a channel id, save the summary to an md file in a folder named after the channel id
 * [ ] feat: Given a channel id, use the output folder to know what is the next video to deal with, and summarize, output and update CSV

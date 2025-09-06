@@ -29,6 +29,9 @@ class YoutubeTranscription:
         transcript = YouTubeTranscriptApi().fetch(video_id)
         return " ".join([entry['text'] for entry in transcript.to_raw_data()])
 
+def channel_rss_url(channel_id):
+    return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+
 class YoutubeSummarizer:
     def get_latest_video_info_from_rss(self, rss_url):
         """Fetch the latest video ID from a YouTube channel RSS feed URL."""
@@ -79,7 +82,7 @@ class YoutubeSummarizer:
         if not channel_id or len(channel_id) != 24 or not channel_id.startswith("UC"):
             print("Invalid YouTube channel ID.")
             sys.exit(1)
-        rss_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+        rss_url = channel_rss_url(channel_id)
         try:
             video_info = self.get_latest_video_info_from_rss(rss_url)
         except Exception as e:
@@ -97,6 +100,7 @@ class YoutubeSummarizer:
             sys.exit(1)
         print(f"\n--- Video Summary for latest video ({video_info["id"]}) ---\n")
         print(summary)
+
 
     def __init__(self, summarizer, transcripter):
         self.summarizer = summarizer
