@@ -74,46 +74,49 @@ class YoutubeSummarizer:
 
         return markdown_summary
 
-    def main(self):
+    def run(self, stdout=sys.stdout):
         if len(sys.argv) < 2:
-            print("Usage: python main.py <youtube_channel_id>. See how to get the channel_id at https://webapps.stackexchange.com/questions/111680/how-to-find-channel-rss-feed-on-youtube")
-            sys.exit(1)
+            raise RuntimeError("Usage: python main.py <youtube_channel_id>. See how to get the channel_id at https://webapps.stackexchange.com/questions/111680/how-to-find-channel-rss-feed-on-youtube")
         channel_id = sys.argv[1]
         if not channel_id or len(channel_id) != 24 or not channel_id.startswith("UC"):
-            print("Invalid YouTube channel ID.")
-            sys.exit(1)
+            raise RuntimeError("Invalid YouTube channel ID.")
         rss_url = channel_rss_url(channel_id)
         try:
             video_info = self.get_latest_video_info_from_rss(rss_url)
         except Exception as e:
-            print(f"Error fetching latest video ID: {e}")
-            sys.exit(1)
+            raise RuntimeError(f"Error fetching latest video ID: {e}")
         try:
             transcript = self.transcript_service.fetch(video_info["id"])
         except Exception as e:
-            print(f"Error fetching transcript: {e}")
-            sys.exit(1)
+            raise RuntimeError(f"Error fetching transcript: {e}")
         try:
             summary = self.summarize_video(transcript, video_info)
         except Exception as e:
-            print(f"Error summarizing transcript: {e}")
-            sys.exit(1)
-        print(f"\n--- Video Summary for latest video ({video_info["id"]}) ---\n")
-        print(summary)
+            raise RuntimeError(f"Error summarizing transcript: {e}")
+
+        stdout.write(f"\n--- Video Summary for latest video ({video_info["id"]}) ---\n\n")
+        stdout.write(summary + "\n")
 
 
     def __init__(self, summarizer, transcripter):
         self.summarizer = summarizer
         self.transcript_service = transcripter
 
-if __name__ == "__main__":
-    load_dotenv()
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        print("OPENAI_API_KEY not set in environment.")
+def main():
+    try:
+        load_dotenv()
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY not set in environment.")
+
+        YoutubeSummarizer(
+            summarizer=Summarizer(api_key),
+            transcripter=YoutubeTranscription()
+        ).run()
+
+    except Exception as e:
+        sys.stderr.write(f"Unexpected error: {e}\n")
         sys.exit(1)
 
-    YoutubeSummarizer(
-        summarizer=Summarizer(api_key),
-        transcripter=YoutubeTranscription()
-    ).main()
+if __name__ == "__main__":
+    main()
