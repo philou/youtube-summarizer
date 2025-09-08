@@ -74,12 +74,7 @@ class YoutubeSummarizer:
 
         return markdown_summary
 
-    def run(self, stdout=sys.stdout):
-        if len(sys.argv) < 2:
-            raise RuntimeError("Usage: python main.py <youtube_channel_id>. See how to get the channel_id at https://webapps.stackexchange.com/questions/111680/how-to-find-channel-rss-feed-on-youtube")
-        channel_id = sys.argv[1]
-        if not channel_id or len(channel_id) != 24 or not channel_id.startswith("UC"):
-            raise RuntimeError("Invalid YouTube channel ID.")
+    def run(self, channel_id, stdout=sys.stdout):
         rss_url = channel_rss_url(channel_id)
         try:
             video_info = self.get_latest_video_info_from_rss(rss_url)
@@ -104,6 +99,12 @@ class YoutubeSummarizer:
 
 def main():
     try:
+        if len(sys.argv) < 2:
+            raise RuntimeError("Usage: python main.py <youtube_channel_id>. See how to get the channel_id at https://webapps.stackexchange.com/questions/111680/how-to-find-channel-rss-feed-on-youtube")
+        channel_id = sys.argv[1]
+        if not channel_id or len(channel_id) != 24 or not channel_id.startswith("UC"):
+            raise RuntimeError("Invalid YouTube channel ID.")
+
         load_dotenv()
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -112,7 +113,7 @@ def main():
         YoutubeSummarizer(
             summarizer=Summarizer(api_key),
             transcripter=YoutubeTranscription()
-        ).run()
+        ).run(channel_id, sys.stdout)
 
     except Exception as e:
         sys.stderr.write(f"Unexpected error: {e}\n")

@@ -34,18 +34,11 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
 
     @responses.activate
     def test_process_channel_approved(self):
-        # Set up test channel ID
-        sys.argv = ['main.py', TEST_CHANNEL_ID]
-        # Capture stdout
-        stdout = StringIO()
+        out = StringIO()
 
-        # Run the main function
-        YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).run(stdout)
+        YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).run(TEST_CHANNEL_ID, out)
 
-        # Get the captured output
-        output = stdout.getvalue()
-        
-        # Verify the output matches approved version
+        output = out.getvalue()
         verify(output, reporter=DiffReporter())
 
 
