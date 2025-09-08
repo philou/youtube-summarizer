@@ -74,7 +74,7 @@ class YoutubeSummarizer:
 
         return markdown_summary
 
-    def run(self, channel_id, stdout=sys.stdout):
+    def run(self, channel_id):
         rss_url = channel_rss_url(channel_id)
         try:
             video_info = self.get_latest_video_info_from_rss(rss_url)
@@ -89,10 +89,15 @@ class YoutubeSummarizer:
         except Exception as e:
             raise RuntimeError(f"Error summarizing transcript: {e}")
 
-        stdout.write(f"\n--- Video Summary for latest video ({video_info["id"]}) ---\n\n")
-        stdout.write(summary + "\n")
+        print(f"--- Summarizing {video_info["title"]} ({video_info["id"]})\n")
 
+        # Save summary to disk
+        os.makedirs(channel_id, exist_ok=True)
+        summary_file_path = os.path.join(channel_id, f"{video_info['id']}.md")
+        with open(summary_file_path, 'w') as f:
+            f.write(summary)
 
+        
     def __init__(self, summarizer, transcripter):
         self.summarizer = summarizer
         self.transcript_service = transcripter
@@ -113,7 +118,7 @@ def main():
         YoutubeSummarizer(
             summarizer=Summarizer(api_key),
             transcripter=YoutubeTranscription()
-        ).run(channel_id, sys.stdout)
+        ).run(channel_id)
 
     except Exception as e:
         sys.stderr.write(f"Unexpected error: {e}\n")

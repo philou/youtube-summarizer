@@ -2,3 +2,5 @@ youtube-transcript-api
 openai
 faker
 responses
+pyfakefs
+approvaltests
