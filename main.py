@@ -33,35 +33,39 @@ def channel_rss_url(channel_id):
     return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
 
 class YoutubeSummarizer:
-    def get_latest_video_info_from_rss(self, rss_url):
-        """Fetch the latest video ID from a YouTube channel RSS feed URL."""
+    def get_all_video_infos_from_rss(self, rss_url):
+        """Fetch all video IDs from a YouTube channel RSS feed URL."""
         try:
             resp = requests.get(rss_url)
             resp.raise_for_status()
             root = ET.fromstring(resp.content)
             # YouTube RSS feeds use the 'yt:videoId' tag in the 'entry' element
             ns = {'yt': 'http://www.youtube.com/xml/schemas/2015', 'atom': 'http://www.w3.org/2005/Atom'}
-            entry = root.find('atom:entry', ns)
-            if entry is None:
-                raise ValueError("No video entries found in RSS feed.")
-            video_id_elem = entry.find('yt:videoId', ns)
-            if video_id_elem is None:
-                raise ValueError("No videoId found in latest entry.")
-    
-            title_elem = entry.find('atom:title', ns)
-            if title_elem is None:
-                raise ValueError("No title found in latest entry.")
-    
-            published_elem = entry.find('atom:published', ns)
-            if published_elem is None:
-                raise ValueError("No published found in latest entry.")
+            entries = root.findall('atom:entry', ns)
 
-            return {
-                "id": video_id_elem.text,
-                "title": title_elem.text,
-                "published": published_elem.text,
-                "url": f"https://www.youtube.com/watch?v={video_id_elem.text}"
-            }
+            video_infos = []
+            for entry in entries:
+                video_id_elem = entry.find('yt:videoId', ns)
+                if video_id_elem is None:
+                    raise ValueError("No videoId found in entry.")
+
+                title_elem = entry.find('atom:title', ns)
+                if title_elem is None:
+                    raise ValueError("No title found in entry.")
+        
+                published_elem = entry.find('atom:published', ns)
+                if published_elem is None:
+                    raise ValueError("No published found in entry.")
+
+                video_infos.append({
+                    "id": video_id_elem.text,
+                    "title": title_elem.text,
+                    "published": published_elem.text,
+                    "url": f"https://www.youtube.com/watch?v={video_id_elem.text}"
+                })
+
+            return video_infos
+        
         except Exception as e:
             raise RuntimeError(f"Failed to parse RSS feed: {e}")
 
@@ -76,27 +80,20 @@ class YoutubeSummarizer:
 
     def run(self, channel_id):
         rss_url = channel_rss_url(channel_id)
-        try:
-            video_info = self.get_latest_video_info_from_rss(rss_url)
-        except Exception as e:
-            raise RuntimeError(f"Error fetching latest video ID: {e}")
-        try:
+        video_infos = self.get_all_video_infos_from_rss(rss_url)
+        print(f"Found {len(video_infos)} videos in channel {channel_id}.")
+
+        for video_info in video_infos:
             transcript = self.transcript_service.fetch(video_info["id"])
-        except Exception as e:
-            raise RuntimeError(f"Error fetching transcript: {e}")
-        try:
             summary = self.summarize_video(transcript, video_info)
-        except Exception as e:
-            raise RuntimeError(f"Error summarizing transcript: {e}")
 
-        print(f"--- Summarizing {video_info["title"]} ({video_info["id"]})\n")
+            print(f"--- Summarizing {video_info['title']} ({video_info['id']})\n")
 
-        # Save summary to disk
-        os.makedirs(channel_id, exist_ok=True)
-        summary_file_path = os.path.join(channel_id, f"{video_info['id']}.md")
-        with open(summary_file_path, 'w') as f:
-            f.write(summary)
-
+            # Save summary to disk
+            os.makedirs(channel_id, exist_ok=True)
+            summary_file_path = os.path.join(channel_id, f"{video_info['id']}.md")
+            with open(summary_file_path, 'w') as f:
+                f.write(summary)
         
     def __init__(self, summarizer, transcripter):
         self.summarizer = summarizer

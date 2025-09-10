@@ -19,7 +19,7 @@
     * [*] test: capture the results without going through patching stdout
     * [*] refactor: pass the channel id as arg to run instead of using argv
 * [*] feat: Given a channel id, save the summary to an md file in a folder named after the channel id
-* [ ] feat: Given a channel id, use the output folder to know what is the next video to deal with, and summarize, output and update CSV
+* [ ] feat: Given a channel id, use the output folder to know what are the missing videos to deal with
 * [ ] feat: Same as above, but now use a given number of videos, not just the single next
 * [ ] feat: When 3 or more summaries to share, create a summary of summaries
 * [ ] feat: Share the summaries as an email
