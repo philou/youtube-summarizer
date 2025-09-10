@@ -84,16 +84,28 @@ class YoutubeSummarizer:
         print(f"Found {len(video_infos)} videos in channel {channel_id}.")
 
         for video_info in video_infos:
-            transcript = self.transcript_service.fetch(video_info["id"])
-            summary = self.summarize_video(transcript, video_info)
+
+            # Skip if summary file already exists
+            if os.path.exists(self.summary_file_path(channel_id, video_info)):
+                continue
 
             print(f"--- Summarizing {video_info['title']} ({video_info['id']})\n")
 
-            # Save summary to disk
-            os.makedirs(channel_id, exist_ok=True)
-            summary_file_path = os.path.join(channel_id, f"{video_info['id']}.md")
-            with open(summary_file_path, 'w') as f:
-                f.write(summary)
+            transcript = self.transcript_service.fetch(video_info["id"])
+            summary = self.summarize_video(transcript, video_info)
+            self.write_file(channel_id, video_info, summary)
+
+    def summary_file_path(self, channel_id, video_info):
+        return os.path.join(channel_id, self.summary_file_name(video_info))
+
+    def write_file(self, channel_id, video_info, summary):
+        os.makedirs(channel_id, exist_ok=True)
+        summary_file_path = os.path.join(channel_id, self.summary_file_name(video_info))
+        with open(summary_file_path, 'w') as f:
+            f.write(summary)
+
+    def summary_file_name(self, video_info):
+        return f"{video_info['id']}.md"
         
     def __init__(self, summarizer, transcripter):
         self.summarizer = summarizer

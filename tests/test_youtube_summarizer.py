@@ -21,6 +21,12 @@ class FakeTranscription:
 
 class TestYouTubeSummarizerE2E(unittest.TestCase):
 
+    def setUp(self):
+        responses.reset()
+
+    def tearDown(self):
+        responses.reset()
+
     @responses.activate
     def test_saves_a_summary_in_a_channel_folder(self):
         """Test that given a channel id, the summary is saved to an md file in a folder named after the channel id"""
@@ -73,16 +79,46 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         verify(summary1, options=NamerFactory.with_parameters("summary 1"))
         verify(summary2, options=NamerFactory.with_parameters("summary 2"))
 
-    def setUp(self):
-        responses.reset()
+    @responses.activate
+    def test_only_writes_missing_summaries(self):
+        """Test that given a channel id, only missing summaries are written to md files in a folder named after the channel id"""
 
-    def tearDown(self):
-        responses.reset()
+        responses.get(channel_rss_url(TEST_CHANNEL_ID),
+                body='''<?xml version="1.0" encoding="UTF-8"?>
+                <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+                    <entry>
+                        <yt:videoId>Nx6qX-9tim4</yt:videoId>
+                        <title>070 - Why ME/CFS &quot;fatigue&quot; is not normal fatigue</title>
+                        <published>2025-08-25T13:29:58+00:00</published>
+                    </entry>
+                    <entry>
+                        <yt:videoId>zN8fdhm6Kdw</yt:videoId>
+                        <title>069 - Can saline infusions help ME/CFS?</title>
+                        <published>2025-08-18T18:06:48+00:00</published>
+                    </entry>
+                </feed>''')
+
+        summary1 = ""
+        summary2 = ""
+
+        with Patcher() as patcher:
+            existing_summary = "existing summary"
+            os.makedirs(TEST_CHANNEL_ID)
+            with open(self.summary_file_path(TEST_CHANNEL_ID, 'Nx6qX-9tim4'), 'w') as f:
+                f.write(existing_summary)
+
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).run(TEST_CHANNEL_ID)
+
+            self.assertTrue(os.path.exists(self.summary_file_path(TEST_CHANNEL_ID, 'zN8fdhm6Kdw')))
+            self.assertEqual(existing_summary, self.read_summary_md_file(TEST_CHANNEL_ID, 'Nx6qX-9tim4'))
 
     def read_summary_md_file(self, channel_id, video_id):
-        with open(os.path.join(channel_id, video_id + '.md'), 'r') as f:
+        with open(self.summary_file_path(channel_id, video_id), 'r') as f:
             content = f.read()
         return content
+
+    def summary_file_path(self, channel_id, video_id):
+        return os.path.join(channel_id, video_id + '.md')
 
 if __name__ == '__main__':
     unittest.main()
