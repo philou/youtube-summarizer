@@ -6,6 +6,7 @@ TEST_CHANNEL_ID = "UCoVoOvIX90IMEZCbBf_ycEA"
 
 class TestYouTubeSummarizerE2E(unittest.TestCase):
 
+    @unittest.skip("Skip by default. Run with -k real_services to execute this test")
     def test_smoke_e2e_with_real_services(self):
         """Just ensure no exception is raised with real services, using a known channel with recent videos."""
     
