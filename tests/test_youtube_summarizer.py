@@ -6,6 +6,7 @@ from youtube_summarizer import YoutubeSummarizer, channel_rss_url
 from faker import Faker
 import responses
 from pyfakefs.fake_filesystem_unittest import Patcher
+from datetime import datetime, timedelta
 
 TEST_CHANNEL_ID = "UC_could_be_anything____"
 
@@ -19,6 +20,41 @@ class FakeTranscription:
         fake = Faker()
         return video_id + " " + fake.text(max_nb_chars=200)
 
+def build_video_ids(count):
+    """Build a list of simple video IDs"""
+    return [str(i) for i in range(1, count + 1)]
+
+def generate_title_for_video_id(video_id):
+    """Generate deterministic title from video ID using faker"""
+    Faker.seed(int(video_id))
+    fake = Faker()
+    return fake.sentence(nb_words=6).rstrip('.')
+
+def generate_published_date(video_id):
+    """Generate published date: 2025-09-12 minus video_id days"""
+    base_date = datetime(2025, 9, 12)
+    days_to_subtract = int(video_id)
+    published_date = base_date - timedelta(days=days_to_subtract)
+    return published_date.strftime('%Y-%m-%dT%H:%M:%S+00:00')
+
+def generate_feed_for(video_ids):
+    """Generate RSS feed XML for given video IDs"""
+    entries = []
+    for video_id in video_ids:
+        title = generate_title_for_video_id(video_id)
+        published = generate_published_date(video_id)
+        entries.append(f'''
+                    <entry>
+                        <yt:videoId>{video_id}</yt:videoId>
+                        <title>{title}</title>
+                        <published>{published}</published>
+                    </entry>''')
+    
+    return f'''<?xml version="1.0" encoding="UTF-8"?>
+            <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+                {''.join(entries)}
+            </feed>'''
+
 class TestYouTubeSummarizerE2E(unittest.TestCase):
 
     def setUp(self):
@@ -31,21 +67,15 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
     def test_saves_a_summary_in_a_channel_folder(self):
         """Test that given a channel id, the summary is saved to an md file in a folder named after the channel id"""
 
+        video_ids = build_video_ids(1)
         responses.get(channel_rss_url(TEST_CHANNEL_ID),
-                body='''<?xml version="1.0" encoding="UTF-8"?>
-                <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
-                    <entry>
-                        <yt:videoId>Nx6qX-9tim4</yt:videoId>
-                        <title>070 - Why ME/CFS &quot;fatigue&quot; is not normal fatigue</title>
-                        <published>2025-08-25T13:29:58+00:00</published>
-                    </entry>
-                </feed>''')
+                body=generate_feed_for(video_ids))
 
         content = ""
 
         with Patcher():
             YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).run(TEST_CHANNEL_ID)
-            content = self.read_summary_md_file(TEST_CHANNEL_ID, 'Nx6qX-9tim4')
+            content = self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[0])
             
         verify(content)
 
@@ -53,28 +83,17 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
     def test_saves_many_summaries_in_a_channel_folder(self):
         """Test that given a channel id, the summaries are saved to md files in a folder named after the channel id"""
 
+        video_ids = build_video_ids(2)
         responses.get(channel_rss_url(TEST_CHANNEL_ID),
-                body='''<?xml version="1.0" encoding="UTF-8"?>
-                <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
-                    <entry>
-                        <yt:videoId>Nx6qX-9tim4</yt:videoId>
-                        <title>070 - Why ME/CFS &quot;fatigue&quot; is not normal fatigue</title>
-                        <published>2025-08-25T13:29:58+00:00</published>
-                    </entry>
-                    <entry>
-                        <yt:videoId>zN8fdhm6Kdw</yt:videoId>
-                        <title>069 - Can saline infusions help ME/CFS?</title>
-                        <published>2025-08-18T18:06:48+00:00</published>
-                    </entry>
-                </feed>''')
+                body=generate_feed_for(video_ids))
 
         summary1 = ""
         summary2 = ""
 
         with Patcher():
             YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).run(TEST_CHANNEL_ID)
-            summary1 = self.read_summary_md_file(TEST_CHANNEL_ID, 'Nx6qX-9tim4')
-            summary2 = self.read_summary_md_file(TEST_CHANNEL_ID, 'zN8fdhm6Kdw')
+            summary1 = self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[0])
+            summary2 = self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[1])
 
         verify(summary1, options=NamerFactory.with_parameters("summary 1"))
         verify(summary2, options=NamerFactory.with_parameters("summary 2"))
@@ -83,57 +102,35 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
     def test_only_writes_missing_summaries(self):
         """Test that given a channel id, only missing summaries are written to md files in a folder named after the channel id"""
 
+        video_ids = build_video_ids(2)
         responses.get(channel_rss_url(TEST_CHANNEL_ID),
-                body='''<?xml version="1.0" encoding="UTF-8"?>
-                <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
-                    <entry>
-                        <yt:videoId>Nx6qX-9tim4</yt:videoId>
-                        <title>070 - Why ME/CFS &quot;fatigue&quot; is not normal fatigue</title>
-                        <published>2025-08-25T13:29:58+00:00</published>
-                    </entry>
-                    <entry>
-                        <yt:videoId>zN8fdhm6Kdw</yt:videoId>
-                        <title>069 - Can saline infusions help ME/CFS?</title>
-                        <published>2025-08-18T18:06:48+00:00</published>
-                    </entry>
-                </feed>''')
+                body=generate_feed_for(video_ids))
 
         with Patcher() as patcher:
             existing_summary = "existing summary"
-            self.write_summary_file('Nx6qX-9tim4', existing_summary)
+            self.write_summary_file(video_ids[0], existing_summary)
 
             YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).run(TEST_CHANNEL_ID)
 
-            self.assertTrue(self.is_summary_file_present('zN8fdhm6Kdw'))
-            self.assertEqual(existing_summary, self.read_summary_md_file(TEST_CHANNEL_ID, 'Nx6qX-9tim4'))
+            self.assertTrue(self.is_summary_file_present(video_ids[1]))
+            self.assertEqual(existing_summary, self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[0]))
 
 
     @responses.activate
     def test_only_writes_so_many_summaries(self):
         """Test that given a channel id, only writes as many summaries as asked"""
 
+        video_ids = build_video_ids(2)
         responses.get(channel_rss_url(TEST_CHANNEL_ID),
-                body='''<?xml version="1.0" encoding="UTF-8"?>
-                <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
-                    <entry>
-                        <yt:videoId>Nx6qX-9tim4</yt:videoId>
-                        <title>070 - Why ME/CFS &quot;fatigue&quot; is not normal fatigue</title>
-                        <published>2025-08-25T13:29:58+00:00</published>
-                    </entry>
-                    <entry>
-                        <yt:videoId>zN8fdhm6Kdw</yt:videoId>
-                        <title>069 - Can saline infusions help ME/CFS?</title>
-                        <published>2025-08-18T18:06:48+00:00</published>
-                    </entry>
-                </feed>''')
+                body=generate_feed_for(video_ids))
 
         with Patcher() as patcher:
             YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).run(TEST_CHANNEL_ID, 1)
 
-            self.assertTrue(self.is_summary_file_present('Nx6qX-9tim4'))
-            self.assertFalse(self.is_summary_file_present('zN8fdhm6Kdw'))
+            self.assertTrue(self.is_summary_file_present(video_ids[0]))
+            self.assertFalse(self.is_summary_file_present(video_ids[1]))
 
-    def is_summary_file_present(self, video_id='zN8fdhm6Kdw'):
+    def is_summary_file_present(self, video_id):
         return os.path.exists(self.summary_file_path(TEST_CHANNEL_ID, video_id))
 
 
