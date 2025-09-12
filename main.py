@@ -122,6 +122,10 @@ def main():
         if not channel_id or len(channel_id) != 24 or not channel_id.startswith("UC"):
             raise RuntimeError("Invalid YouTube channel ID.")
 
+        max_summaries = None
+        if len(sys.argv) > 2:
+            max_summaries = int(sys.argv[2])
+
         load_dotenv()
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -130,7 +134,7 @@ def main():
         YoutubeSummarizer(
             summarizer=Summarizer(api_key),
             transcripter=YoutubeTranscription()
-        ).run(channel_id)
+        ).run(channel_id, max_summaries)
 
     except Exception as e:
         sys.stderr.write(f"Unexpected error: {e}\n")

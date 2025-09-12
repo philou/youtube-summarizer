@@ -23,7 +23,7 @@
 * [*] feat: Same as above, but now use a given number of videos, not just the single next
     - [x] did too much in 1 batch -> revert and cherry pick
     - [x] add the feature
-    - [ ] change the main to accept an argument
+    - [x] change the main to accept an argument
     - [ ] rename main to youtube_summarizer
     - [ ] migrate to pytest
     - [ ] change the @unitest.skip to @pytest.mark.slow
