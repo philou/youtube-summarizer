@@ -78,22 +78,25 @@ class YoutubeSummarizer:
 
         return markdown_summary
 
-    def run(self, channel_id):
+    def run(self, channel_id, max_summaries=None):
         rss_url = channel_rss_url(channel_id)
         video_infos = self.get_all_video_infos_from_rss(rss_url)
         print(f"Found {len(video_infos)} videos in channel {channel_id}.")
 
+        video_infos = [vi for vi in video_infos if not self.is_summary_file_present(channel_id, vi)]
+        if max_summaries is not None:
+            video_infos = video_infos[:max_summaries]
+        print(f"Summarizing {len(video_infos)} new videos...")
+
         for video_info in video_infos:
-
-            # Skip if summary file already exists
-            if os.path.exists(self.summary_file_path(channel_id, video_info)):
-                continue
-
-            print(f"--- Summarizing {video_info['title']} ({video_info['id']})\n")
+            print(f"- Summarizing {video_info['title']} ({video_info['id']})\n")
 
             transcript = self.transcript_service.fetch(video_info["id"])
             summary = self.summarize_video(transcript, video_info)
             self.write_file(channel_id, video_info, summary)
+
+    def is_summary_file_present(self, channel_id, video_info):
+        return os.path.exists(self.summary_file_path(channel_id, video_info))
 
     def summary_file_path(self, channel_id, video_info):
         return os.path.join(channel_id, self.summary_file_name(video_info))

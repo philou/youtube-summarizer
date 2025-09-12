@@ -20,11 +20,18 @@
     * [*] refactor: pass the channel id as arg to run instead of using argv
 * [*] feat: Given a channel id, save the summary to an md file in a folder named after the channel id
 * [*] feat: Given a channel id, use the output folder to know what are the missing videos to deal with
-* [ ] feat: Same as above, but now use a given number of videos, not just the single next
+* [*] feat: Same as above, but now use a given number of videos, not just the single next
+    - [x] did too much in 1 batch -> revert and cherry pick
+    - [x] add the feature
+    - [ ] change the main to accept an argument
+    - [ ] rename main to youtube_summarizer
+    - [ ] migrate to pytest
+    - [ ] change the @unitest.skip to @pytest.mark.slow
+* [ ] refactor: introduct feed builder in tests
 * [ ] feat: When 3 or more summaries to share, create a summary of summaries
 * [ ] feat: Share the summaries as an email
 * [ ] test: test for edge and corner cases
 
 ## Parking
 * [ ] test: setup TCR for fast flow, and try to help AI with this
-* [ ] refactor: clean up exception handling code
+* [ ] refactor: clean up the abstraction level in main
