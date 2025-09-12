@@ -1,8 +1,8 @@
 import unittest
-from approvaltests import verify, approvals
+from approvaltests import verify
 from approvaltests.namer.default_namer_factory import NamerFactory
 import os
-from main import YoutubeSummarizer, channel_rss_url
+from youtube_summarizer import YoutubeSummarizer, channel_rss_url
 from faker import Faker
 import responses
 from pyfakefs.fake_filesystem_unittest import Patcher

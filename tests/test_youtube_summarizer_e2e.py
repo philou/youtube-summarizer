@@ -1,6 +1,6 @@
 import unittest
 import sys
-from main import main
+from youtube_summarizer import main
 
 TEST_CHANNEL_ID = "UCoVoOvIX90IMEZCbBf_ycEA"
 

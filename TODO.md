@@ -24,9 +24,7 @@
     - [x] did too much in 1 batch -> revert and cherry pick
     - [x] add the feature
     - [x] change the main to accept an argument
-    - [ ] rename main to youtube_summarizer
-    - [ ] migrate to pytest
-    - [ ] change the @unitest.skip to @pytest.mark.slow
+    - [x] rename main to youtube_summarizer
 * [ ] refactor: introduct feed builder in tests
 * [ ] feat: When 3 or more summaries to share, create a summary of summaries
 * [ ] feat: Share the summaries as an email
@@ -35,3 +33,4 @@
 ## Parking
 * [ ] test: setup TCR for fast flow, and try to help AI with this
 * [ ] refactor: clean up the abstraction level in main
+* [ ] test: migrate to pytest and replace @unitest.skip with @pytest.mark.slow
