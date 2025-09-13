@@ -12,7 +12,12 @@ TEST_CHANNEL_ID = "UC_could_be_anything____"
 
 class FakeSummarizer:
     def summarize_text(self, text):
-        return text[:30] + '...'
+        words = text.split()
+        if len(words) <= 10:
+            return text
+        first10 = ' '.join(words[:10])
+        remaining = len(words) - 10
+        return f"{first10}... and {remaining} more words"
     
 class FakeTranscription:
     def fetch(self, video_id):
@@ -129,6 +134,10 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
 
             self.assertTrue(self.is_summary_file_present(video_ids[0]))
             self.assertFalse(self.is_summary_file_present(video_ids[1]))
+
+    # @responses.activate
+    # def test_shares_new_summaries_through_email(self):
+
 
     def is_summary_file_present(self, video_id):
         return os.path.exists(self.summary_file_path(TEST_CHANNEL_ID, video_id))

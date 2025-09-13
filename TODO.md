@@ -25,9 +25,9 @@
     - [x] add the feature
     - [x] change the main to accept an argument
     - [x] rename main to youtube_summarizer
-* [ ] refactor: introduct feed builder in tests
-* [ ] feat: When 3 or more summaries to share, create a summary of summaries
+* [x] refactor: introduct feed builder in tests
 * [ ] feat: Share the summaries as an email
+* [ ] feat: When 3 or more summaries to share, create a summary of summaries
 * [ ] test: test for edge and corner cases
 
 ## Parking
