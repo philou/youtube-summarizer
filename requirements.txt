@@ -4,3 +4,4 @@ faker
 responses
 pyfakefs
 approvaltests
+yagmail

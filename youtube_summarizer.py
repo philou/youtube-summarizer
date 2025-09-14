@@ -7,6 +7,7 @@ import openai
 from youtube_transcript_api import YouTubeTranscriptApi
 import requests
 import xml.etree.ElementTree as ET
+import yagmail
 
 class Summarizer:
     def __init__(self, api_key):
@@ -103,8 +104,9 @@ class YoutubeSummarizer:
 
             combined_md.append(f"#{summary}\n\n---\n\n")
 
+        print(f"Sending summary email to {email}...")
         full_markdown = "".join(combined_md).strip()
-        self.email_service.send(email, f"[{channel_info["title"]}] New Video Summaries Available", full_markdown)
+        self.email_service.send(email, f"[{channel_info['title']}] New Video Summaries Available", full_markdown)
 
     def is_summary_file_present(self, channel_id, video_info):
         return os.path.exists(self.summary_file_path(channel_id, video_info))
@@ -128,26 +130,37 @@ class YoutubeSummarizer:
 
 def main():
     try:
-        if len(sys.argv) < 2:
-            raise RuntimeError("Usage: python main.py <youtube_channel_id>. See how to get the channel_id at https://webapps.stackexchange.com/questions/111680/how-to-find-channel-rss-feed-on-youtube")
+        if len(sys.argv) < 3:
+            raise RuntimeError("Usage: python main.py <youtube_channel_id> <recipient_email>")
         channel_id = sys.argv[1]
         if not channel_id or len(channel_id) != 24 or not channel_id.startswith("UC"):
             raise RuntimeError("Invalid YouTube channel ID.")
+        recipient_email = sys.argv[2]
+        if not recipient_email:
+            raise RuntimeError("Invalid recipient email.")
 
         max_summaries = None
-        if len(sys.argv) > 2:
-            max_summaries = int(sys.argv[2])
+        if len(sys.argv) > 3:
+            max_summaries = int(sys.argv[3])
 
         load_dotenv()
+
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY not set in environment.")
 
+        gmail_username = os.getenv("GMAIL_USERNAME")
+        if not gmail_username:
+            raise RuntimeError("GMAIL_USERNAME not set in environment.")
+        gmail_password = os.getenv("GMAIL_PASSWORD")
+        if not gmail_password:
+            raise RuntimeError("GMAIL_PASSWORD not set in environment.")
+        
         YoutubeSummarizer(
             summarizer=Summarizer(api_key),
             transcripter=YoutubeTranscription(),
-            email_service=None  # Email service not yet implemented
-        ).run(channel_id, "user@example.com", max_summaries)
+            email_service=yagmail.SMTP(gmail_username, gmail_password)
+        ).run(channel_id, recipient_email, max_summaries)
 
     except Exception as e:
         sys.stderr.write(f"Unexpected error: {e}\n")
