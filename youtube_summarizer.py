@@ -33,14 +33,18 @@ def channel_rss_url(channel_id):
     return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
 
 class YoutubeSummarizer:
-    def get_all_video_infos_from_rss(self, rss_url):
-        """Fetch all video IDs from a YouTube channel RSS feed URL."""
+    def get_channel_title_and_video_infos(self, rss_url):
+        """Fetch channel title and all video infos from a YouTube channel RSS feed URL."""
         try:
             resp = requests.get(rss_url)
             resp.raise_for_status()
             root = ET.fromstring(resp.content)
-            # YouTube RSS feeds use the 'yt:videoId' tag in the 'entry' element
             ns = {'yt': 'http://www.youtube.com/xml/schemas/2015', 'atom': 'http://www.w3.org/2005/Atom'}
+
+            # Channel title is the <title> directly under <feed>
+            channel_title_elem = root.find('atom:title', ns)
+            channel_title = channel_title_elem.text if channel_title_elem is not None else None
+
             entries = root.findall('atom:entry', ns)
 
             video_infos = []
@@ -64,7 +68,7 @@ class YoutubeSummarizer:
                     "url": f"https://www.youtube.com/watch?v={video_id_elem.text}"
                 })
 
-            return video_infos
+            return {"title": channel_title, "video_infos": video_infos}
         
         except Exception as e:
             raise RuntimeError(f"Failed to parse RSS feed: {e}")
@@ -78,9 +82,10 @@ class YoutubeSummarizer:
 
         return markdown_summary
 
-    def run(self, channel_id, max_summaries=None):
+    def run(self, channel_id, email, max_summaries=None):
         rss_url = channel_rss_url(channel_id)
-        video_infos = self.get_all_video_infos_from_rss(rss_url)
+        channel_info = self.get_channel_title_and_video_infos(rss_url)
+        video_infos = channel_info.get("video_infos", [])
         print(f"Found {len(video_infos)} videos in channel {channel_id}.")
 
         video_infos = [vi for vi in video_infos if not self.is_summary_file_present(channel_id, vi)]
@@ -88,12 +93,18 @@ class YoutubeSummarizer:
             video_infos = video_infos[:max_summaries]
         print(f"Summarizing {len(video_infos)} new videos...")
 
+        combined_md = [f"# Summaries for channel {channel_id}\n\n"]
         for video_info in video_infos:
             print(f"- Summarizing {video_info['title']} ({video_info['id']})\n")
 
             transcript = self.transcript_service.fetch(video_info["id"])
             summary = self.summarize_video(transcript, video_info)
             self.write_file(channel_id, video_info, summary)
+
+            combined_md.append(f"#{summary}\n\n---\n\n")
+
+        full_markdown = "".join(combined_md).strip()
+        self.email_service.send(email, f"[{channel_info["title"]}] New Video Summaries Available", full_markdown)
 
     def is_summary_file_present(self, channel_id, video_info):
         return os.path.exists(self.summary_file_path(channel_id, video_info))
@@ -110,9 +121,10 @@ class YoutubeSummarizer:
     def summary_file_name(self, video_info):
         return f"{video_info['id']}.md"
         
-    def __init__(self, summarizer, transcripter):
+    def __init__(self, summarizer, transcripter, email_service):
         self.summarizer = summarizer
         self.transcript_service = transcripter
+        self.email_service = email_service
 
 def main():
     try:
@@ -133,8 +145,9 @@ def main():
 
         YoutubeSummarizer(
             summarizer=Summarizer(api_key),
-            transcripter=YoutubeTranscription()
-        ).run(channel_id, max_summaries)
+            transcripter=YoutubeTranscription(),
+            email_service=None  # Email service not yet implemented
+        ).run(channel_id, "user@example.com", max_summaries)
 
     except Exception as e:
         sys.stderr.write(f"Unexpected error: {e}\n")

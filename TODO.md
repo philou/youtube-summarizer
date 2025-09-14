@@ -28,9 +28,11 @@
 * [x] refactor: introduct feed builder in tests
 * [ ] feat: Share the summaries as an email
 * [ ] feat: When 3 or more summaries to share, create a summary of summaries
+* [ ] feat: generate email subject from content
 * [ ] test: test for edge and corner cases
 
 ## Parking
+* [ ] refactor: make methods private
 * [ ] test: setup TCR for fast flow, and try to help AI with this
 * [ ] refactor: clean up the abstraction level in main
 * [ ] test: migrate to pytest and replace @unitest.skip with @pytest.mark.slow

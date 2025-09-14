@@ -24,6 +24,17 @@ class FakeTranscription:
         Faker.seed(video_id)
         fake = Faker()
         return video_id + " " + fake.text(max_nb_chars=200)
+    
+class FakeEmailService:
+    def __init__(self):
+        self.sent_email = None
+
+    def send(self, to, subject, body):
+        self.sent_email = {
+            'to': to,
+            'subject': subject,
+            'body': body
+        }
 
 def build_video_ids(count):
     """Build a list of simple video IDs"""
@@ -42,7 +53,7 @@ def generate_published_date(video_id):
     published_date = base_date - timedelta(days=days_to_subtract)
     return published_date.strftime('%Y-%m-%dT%H:%M:%S+00:00')
 
-def generate_feed_for(video_ids):
+def generate_feed_for(video_ids, channel_title = "My Channel"):
     """Generate RSS feed XML for given video IDs"""
     entries = []
     for video_id in video_ids:
@@ -57,6 +68,7 @@ def generate_feed_for(video_ids):
     
     return f'''<?xml version="1.0" encoding="UTF-8"?>
             <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+                <title>{channel_title}</title>
                 {''.join(entries)}
             </feed>'''
 
@@ -79,7 +91,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         content = ""
 
         with Patcher():
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).run(TEST_CHANNEL_ID)
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService()).run(TEST_CHANNEL_ID, "user@example.com")
             content = self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[0])
             
         verify(content)
@@ -96,7 +108,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         summary2 = ""
 
         with Patcher():
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).run(TEST_CHANNEL_ID)
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService()).run(TEST_CHANNEL_ID, "user@example.com")
             summary1 = self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[0])
             summary2 = self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[1])
 
@@ -115,7 +127,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
             existing_summary = "existing summary"
             self.write_summary_file(video_ids[0], existing_summary)
 
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).run(TEST_CHANNEL_ID)
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService()).run(TEST_CHANNEL_ID, "user@example.com")
 
             self.assertTrue(self.is_summary_file_present(video_ids[1]))
             self.assertEqual(existing_summary, self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[0]))
@@ -130,14 +142,27 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
                 body=generate_feed_for(video_ids))
 
         with Patcher() as patcher:
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription()).run(TEST_CHANNEL_ID, 1)
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService()).run(TEST_CHANNEL_ID, "user@example.com", 1)
 
             self.assertTrue(self.is_summary_file_present(video_ids[0]))
             self.assertFalse(self.is_summary_file_present(video_ids[1]))
 
-    # @responses.activate
-    # def test_shares_new_summaries_through_email(self):
+    @responses.activate
+    def test_shares_new_summaries_through_email(self):
+        """Test that given a channel id, new summaries are shared through email"""
 
+        video_ids = build_video_ids(1)
+        responses.get(channel_rss_url(TEST_CHANNEL_ID),
+                body=generate_feed_for(video_ids, "Awesome Videos"))
+
+        fakeEmailer = FakeEmailService()
+
+        with Patcher() as patcher:
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "johndoe@example.com", 1)
+
+        self.assertEqual(fakeEmailer.sent_email['to'], 'johndoe@example.com')
+        self.assertEqual(fakeEmailer.sent_email['subject'], '[Awesome Videos] New Video Summaries Available')
+        verify(fakeEmailer.sent_email['body'])
 
     def is_summary_file_present(self, video_id):
         return os.path.exists(self.summary_file_path(TEST_CHANNEL_ID, video_id))
