@@ -27,15 +27,16 @@
     - [x] rename main to youtube_summarizer
 * [x] refactor: introduct feed builder in tests
 * [*] feat: Share the summaries as an email
-* [ ] refactor: extract methods in the main function
+* [*] refactor: extract methods in the main function
 * [ ] feat: When 3 or more summaries to share, create a summary of summaries
 * [ ] feat: generate email subject from content
 * [ ] test: test for edge and corner cases
+* [ ] deploy: setup a robust cron scheduler on my mac
 
 ## Parking
 * [ ] feat: convert the markdown to html for the email
 * [ ] refactor: make methods private
-* [ ] refactor: migrate to pytest to have real "slowTest" tags and allow to run e2e test without commenting the skip annotation
 * [ ] test: setup TCR for fast flow, and try to help AI with this
 * [ ] refactor: clean up the abstraction level in main
 * [ ] test: migrate to pytest and replace @unitest.skip with @pytest.mark.slow
+* [ ] feat: make it deployable on github actions with branch + env vars + use git as db

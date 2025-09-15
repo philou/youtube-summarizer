@@ -130,31 +130,9 @@ class YoutubeSummarizer:
 
 def main():
     try:
-        if len(sys.argv) < 3:
-            raise RuntimeError("Usage: python main.py <youtube_channel_id> <recipient_email>")
-        channel_id = sys.argv[1]
-        if not channel_id or len(channel_id) != 24 or not channel_id.startswith("UC"):
-            raise RuntimeError("Invalid YouTube channel ID.")
-        recipient_email = sys.argv[2]
-        if not recipient_email:
-            raise RuntimeError("Invalid recipient email.")
+        channel_id, recipient_email, max_summaries = parse_arguments()
 
-        max_summaries = None
-        if len(sys.argv) > 3:
-            max_summaries = int(sys.argv[3])
-
-        load_dotenv()
-
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise RuntimeError("OPENAI_API_KEY not set in environment.")
-
-        gmail_username = os.getenv("GMAIL_USERNAME")
-        if not gmail_username:
-            raise RuntimeError("GMAIL_USERNAME not set in environment.")
-        gmail_password = os.getenv("GMAIL_PASSWORD")
-        if not gmail_password:
-            raise RuntimeError("GMAIL_PASSWORD not set in environment.")
+        api_key, gmail_username, gmail_password = load_environment_variables()
         
         YoutubeSummarizer(
             summarizer=Summarizer(api_key),
@@ -165,6 +143,37 @@ def main():
     except Exception as e:
         sys.stderr.write(f"Unexpected error: {e}\n")
         sys.exit(1)
+
+def parse_arguments():
+    if len(sys.argv) < 3:
+        raise RuntimeError("Usage: python main.py <youtube_channel_id> <recipient_email>")
+    channel_id = sys.argv[1]
+    if not channel_id or len(channel_id) != 24 or not channel_id.startswith("UC"):
+        raise RuntimeError("Invalid YouTube channel ID.")
+    recipient_email = sys.argv[2]
+    if not recipient_email:
+        raise RuntimeError("Invalid recipient email.")
+
+    max_summaries = None
+    if len(sys.argv) > 3:
+        max_summaries = int(sys.argv[3])
+    return channel_id,recipient_email,max_summaries
+
+def load_environment_variables():
+    load_dotenv()
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY not set in environment.")
+
+    gmail_username = os.getenv("GMAIL_USERNAME")
+    if not gmail_username:
+        raise RuntimeError("GMAIL_USERNAME not set in environment.")
+    gmail_password = os.getenv("GMAIL_PASSWORD")
+    if not gmail_password:
+        raise RuntimeError("GMAIL_PASSWORD not set in environment.")
+
+    return api_key, gmail_username, gmail_password
 
 if __name__ == "__main__":
     main()
