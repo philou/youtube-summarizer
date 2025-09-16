@@ -86,7 +86,8 @@ class YoutubeSummarizer:
     def run(self, channel_id, email, max_summaries=None):
         rss_url = channel_rss_url(channel_id)
         channel_info = self.get_channel_title_and_video_infos(rss_url)
-        video_infos = channel_info.get("video_infos", [])
+        channel_title = channel_info["title"]
+        video_infos = channel_info["video_infos"]
         print(f"Found {len(video_infos)} videos in channel {channel_id}.")
 
         video_infos = [vi for vi in video_infos if not self.is_summary_file_present(channel_id, vi)]
@@ -94,7 +95,7 @@ class YoutubeSummarizer:
             video_infos = video_infos[:max_summaries]
         print(f"Summarizing {len(video_infos)} new videos...")
 
-        combined_md = [f"# Summaries for channel {channel_id}\n\n"]
+        combined_md = []
         for video_info in video_infos:
             print(f"- Summarizing {video_info['title']} ({video_info['id']})\n")
 
@@ -102,11 +103,12 @@ class YoutubeSummarizer:
             summary = self.summarize_video(transcript, video_info)
             self.write_file(channel_id, video_info, summary)
 
-            combined_md.append(f"#{summary}\n\n---\n\n")
+            combined_md.append(f"#{summary}")
 
         print(f"Sending summary email to {email}...")
-        full_markdown = "".join(combined_md).strip()
-        self.email_service.send(email, f"[{channel_info['title']}] New Video Summaries Available", full_markdown)
+        summaries_markdown = "\n\n---\n\n".join(combined_md).strip()
+        full_markdown = f"# Summaries for channel {channel_title} ({channel_id})\n\n{summaries_markdown}"
+        self.email_service.send(email, f"[{channel_title}] New Video Summaries Available", full_markdown)
 
     def is_summary_file_present(self, channel_id, video_info):
         return os.path.exists(self.summary_file_path(channel_id, video_info))
