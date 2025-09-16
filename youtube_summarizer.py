@@ -107,29 +107,29 @@ class YoutubeSummarizer:
 
         print(f"Sending summary email to {email}...")
 
+        self.send_email(email, channel_title, summaries)
+
+    def send_email(self, email, channel_title, summaries):
+        full_markdown = self.generate_email_content(channel_title, summaries)
+        
+        self.email_service.send(email, f"[{channel_title}] New Video Summaries Available", full_markdown)
+
+    def generate_email_content(self, channel_title, summaries):
         combined_md = [f"#{md}" for md in summaries]
         summaries_markdown = "\n\n".join(combined_md).strip()
         full_markdown = ""
-        if (len(video_infos) > 1):
+        meta_summary_md = ""
+        if (len(summaries) > 1):
             meta_summary = self.summarizer.summarize_text(summaries_markdown)
-            full_markdown = '''\
-# Summaries for channel {channel_title} ({channel_id})
-
-## At a glance
-
-{meta_summary}
-
+            meta_summary_md = f"\n## At a glance\n\n{meta_summary}\n"
+        
+        full_markdown = '''\
+# Summaries for channel {channel_title}
+{meta_summary_md}
 {summaries_markdown}
-'''.format(channel_title=channel_title, channel_id=channel_id, meta_summary=meta_summary, summaries_markdown=summaries_markdown)
+'''.format(channel_title=channel_title, meta_summary_md=meta_summary_md, summaries_markdown=summaries_markdown)
 
-        else:
-            full_markdown = '''\
-# Summaries for channel {channel_title} ({channel_id})
-
-{summaries_markdown}
-'''.format(channel_title=channel_title, channel_id=channel_id, summaries_markdown=summaries_markdown)
-            
-        self.email_service.send(email, f"[{channel_title}] New Video Summaries Available", full_markdown)
+        return full_markdown
 
     def is_summary_file_present(self, channel_id, video_info):
         return os.path.exists(self.summary_file_path(channel_id, video_info))
