@@ -7,11 +7,15 @@ from faker import Faker
 import responses
 from pyfakefs.fake_filesystem_unittest import Patcher
 from datetime import datetime, timedelta
+import re
 
 TEST_CHANNEL_ID = "UC_could_be_anything____"
 
 class FakeSummarizer:
     def summarize_text(self, text):
+        # demarkdownify text using
+        text = re.sub(r'#+ ', '', text).strip()
+
         words = text.split()
         if len(words) <= 10:
             return text
@@ -162,6 +166,21 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
 
         self.assertEqual(fakeEmailer.sent_email['to'], 'johndoe@example.com')
         self.assertEqual(fakeEmailer.sent_email['subject'], '[Awesome Videos] New Video Summaries Available')
+        verify(fakeEmailer.sent_email['body'])
+
+    @responses.activate
+    def test_create_summary_of_summaries_if_there_is_more_than_one_video(self):
+        """Test that given a channel id, a summary of summaries is created and shared through email"""
+
+        video_ids = build_video_ids(2)
+        responses.get(channel_rss_url(TEST_CHANNEL_ID),
+                body=generate_feed_for(video_ids))
+
+        fakeEmailer = FakeEmailService()
+
+        with Patcher() as patcher:
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "user@example.com")
+
         verify(fakeEmailer.sent_email['body'])
 
     def is_summary_file_present(self, video_id):
