@@ -29,7 +29,7 @@
 * [*] feat: Share the summaries as an email
 * [*] refactor: extract methods in the main function
 * [*] feat: When 3 or more summaries to share, create a summary of summaries
-* [ ] feat: generate email subject from content
+* [*] feat: generate email subject from content
 * [ ] deploy: setup a robust cron scheduler on my mac
 
 ## Parking

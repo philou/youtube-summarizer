@@ -157,7 +157,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
 
         video_ids = build_video_ids(1)
         responses.get(channel_rss_url(TEST_CHANNEL_ID),
-                body=generate_feed_for(video_ids, "Awesome Videos"))
+                body=generate_feed_for(video_ids))
 
         fakeEmailer = FakeEmailService()
 
@@ -195,9 +195,10 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         with Patcher() as patcher:
             YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "user@example.com")
 
-        self.assertEqual(fakeEmailer.sent_email['subject'], "🎬 [YouTube Summaries][Dog Channel] 2 New Video Summaries Available")
+        self.assertEqual(
+            "🎬 [YouTube Summaries][Dog Channel] 2 New Video Summaries Available",
+            fakeEmailer.sent_email['subject'])
 
-    @unittest.skip("Skip for the moment")
     @responses.activate
     def test_uses_video_title_as_email_subject_if_only_one_new_video(self):
         """Test that if there is only one new video, the email subject is the video title"""
@@ -211,8 +212,9 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         with Patcher() as patcher:
             YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "user@example.com")
 
-        self.assertEqual(f"🎬 [YouTube Summaries][Kitten Channel] {generate_title_for_video_id(video_ids[0])}",
-                         fakeEmailer.sent_email['subject'])
+        self.assertEqual(
+            f"🎬 [YouTube Summaries][Kitten Channel] {generate_title_for_video_id(video_ids[0])}",
+            fakeEmailer.sent_email['subject'])
 
     def is_summary_file_present(self, video_id):
         return os.path.exists(self.summary_file_path(TEST_CHANNEL_ID, video_id))
