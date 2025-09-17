@@ -40,3 +40,4 @@
 * [ ] test: setup TCR for fast flow, and try to help AI with this
 * [ ] refactor: clean up the abstraction level in main
 * [ ] test: migrate to pytest and replace @unitest.skip with @pytest.mark.slow
+* [ ] refactor: rename the test in test_youtout_summarizer.py

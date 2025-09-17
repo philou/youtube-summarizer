@@ -11,7 +11,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         """Just ensure no exception is raised with real services, using a known channel with recent videos."""
     
         try:
-            sys.argv = ['main.py', TEST_CHANNEL_ID, "philippe.bourgau@gmail.com", "1"]
+            sys.argv = ['main.py', TEST_CHANNEL_ID, "philippe.bourgau@gmail.com", "2"]
             main()
         except SystemExit as e:
             raise RuntimeError(f"Unexpected SystemExit: {e}")
