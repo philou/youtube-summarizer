@@ -102,7 +102,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
 
     @responses.activate
     def test_saves_many_summaries_in_a_channel_folder(self):
-        """Test that given a channel id, the summaries are saved to md files in a folder named after the channel id"""
+        """Test that the summaries are saved to md files in a folder named after the channel id"""
 
         video_ids = build_video_ids(2)
         responses.get(channel_rss_url(TEST_CHANNEL_ID),
@@ -121,7 +121,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
 
     @responses.activate
     def test_only_writes_missing_summaries(self):
-        """Test that given a channel id, only missing summaries are written to md files in a folder named after the channel id"""
+        """Test that only missing summaries are written to md files in a folder named after the channel id"""
 
         video_ids = build_video_ids(2)
         responses.get(channel_rss_url(TEST_CHANNEL_ID),
@@ -139,7 +139,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
 
     @responses.activate
     def test_only_writes_so_many_summaries(self):
-        """Test that given a channel id, only writes as many summaries as asked"""
+        """Test that it only writes as many summaries as asked"""
 
         video_ids = build_video_ids(2)
         responses.get(channel_rss_url(TEST_CHANNEL_ID),
@@ -153,7 +153,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
 
     @responses.activate
     def test_shares_new_summaries_through_email(self):
-        """Test that given a channel id, new summaries are shared through email"""
+        """Test that new summaries are shared through email"""
 
         video_ids = build_video_ids(1)
         responses.get(channel_rss_url(TEST_CHANNEL_ID),
@@ -164,13 +164,12 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         with Patcher() as patcher:
             YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "johndoe@example.com", 1)
 
-        self.assertEqual(fakeEmailer.sent_email['to'], 'johndoe@example.com')
-        self.assertEqual(fakeEmailer.sent_email['subject'], '[Awesome Videos] New Video Summaries Available')
+        self.assertEqual('johndoe@example.com', fakeEmailer.sent_email['to'])
         verify(fakeEmailer.sent_email['body'])
 
     @responses.activate
     def test_create_summary_of_summaries_if_there_is_more_than_one_video(self):
-        """Test that given a channel id, a summary of summaries is created and shared through email"""
+        """Test that a summary of summaries is created and shared through email"""
 
         video_ids = build_video_ids(2)
         responses.get(channel_rss_url(TEST_CHANNEL_ID),
@@ -183,9 +182,40 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
 
         verify(fakeEmailer.sent_email['body'])
 
+    @responses.activate
+    def test_email_subject_contains_number_of_video_summaries(self):
+        """Test that the email subject contains the number of new video summaries"""
+
+        video_ids = build_video_ids(2)
+        responses.get(channel_rss_url(TEST_CHANNEL_ID),
+                body=generate_feed_for(video_ids, "Dog Channel"))
+
+        fakeEmailer = FakeEmailService()
+
+        with Patcher() as patcher:
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "user@example.com")
+
+        self.assertEqual(fakeEmailer.sent_email['subject'], "🎬 [YouTube Summaries][Dog Channel] 2 New Video Summaries Available")
+
+    @unittest.skip("Skip for the moment")
+    @responses.activate
+    def test_uses_video_title_as_email_subject_if_only_one_new_video(self):
+        """Test that if there is only one new video, the email subject is the video title"""
+
+        video_ids = build_video_ids(1)
+        responses.get(channel_rss_url(TEST_CHANNEL_ID),
+                body=generate_feed_for(video_ids, "Kitten Channel"))
+
+        fakeEmailer = FakeEmailService()
+
+        with Patcher() as patcher:
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "user@example.com")
+
+        self.assertEqual(f"🎬 [YouTube Summaries][Kitten Channel] {generate_title_for_video_id(video_ids[0])}",
+                         fakeEmailer.sent_email['subject'])
+
     def is_summary_file_present(self, video_id):
         return os.path.exists(self.summary_file_path(TEST_CHANNEL_ID, video_id))
-
 
     def read_summary_md_file(self, channel_id, video_id):
         with open(self.summary_file_path(channel_id, video_id), 'r') as f:

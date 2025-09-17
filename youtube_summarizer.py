@@ -112,7 +112,7 @@ class YoutubeSummarizer:
     def send_email(self, email, channel_title, summaries):
         full_markdown = self.generate_email_content(channel_title, summaries)
 
-        self.email_service.send(email, f"[{channel_title}] New Video Summaries Available", full_markdown)
+        self.email_service.send(email, f"🎬 [YouTube Summaries][{channel_title}] {len(summaries)} New Video Summaries Available", full_markdown)
 
     def generate_email_content(self, channel_title, summaries):
         combined_md = [f"#{md}" for md in summaries]
