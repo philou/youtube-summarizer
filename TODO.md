@@ -30,14 +30,14 @@
 * [*] refactor: extract methods in the main function
 * [*] feat: When 3 or more summaries to share, create a summary of summaries
 * [*] feat: generate email subject from content
+* [*] feat: convert the markdown to html for the email
 * [ ] deploy: setup a robust cron scheduler on my mac
+* [ ] feat: make it deployable on github actions with branch + env vars + use git as db
 
 ## Parking
-* [ ] feat: convert the markdown to html for the email
-* [ ] feat: make it deployable on github actions with branch + env vars + use git as db
-* [ ] test: test for edge and corner cases
 * [ ] refactor: make methods private
-* [ ] test: setup TCR for fast flow, and try to help AI with this
-* [ ] refactor: clean up the abstraction level in main
-* [ ] test: migrate to pytest and replace @unitest.skip with @pytest.mark.slow
 * [ ] refactor: rename the test in test_youtout_summarizer.py
+* [ ] test: test for edge and corner cases
+* [ ] test: setup TCR for fast flow, and try to help AI with this
+* [ ] test: migrate to pytest and replace @unitest.skip with @pytest.mark.slow
+* [*] refactor: clean up the abstraction level in main

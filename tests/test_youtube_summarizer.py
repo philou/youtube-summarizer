@@ -168,6 +168,21 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         verify(fakeEmailer.sent_email['body'])
 
     @responses.activate
+    def test_formats_summary_emails_in_html(self):
+        """Test that the summary email is formatted in HTML"""
+
+        video_ids = build_video_ids(1)
+        responses.get(channel_rss_url(TEST_CHANNEL_ID),
+                body=generate_feed_for(video_ids))
+
+        fakeEmailer = FakeEmailService()
+
+        with Patcher() as patcher:
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "johndoe@example.com", 1)
+
+        self.assertIn('<h1>', fakeEmailer.sent_email['body'])
+
+    @responses.activate
     def test_create_summary_of_summaries_if_there_is_more_than_one_video(self):
         """Test that a summary of summaries is created and shared through email"""
 

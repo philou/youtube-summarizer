@@ -5,3 +5,4 @@ responses
 pyfakefs
 approvaltests
 yagmail
+markdown

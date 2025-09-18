@@ -8,6 +8,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 import requests
 import xml.etree.ElementTree as ET
 import yagmail
+import markdown
 
 class Summarizer:
     def __init__(self, api_key):
@@ -112,7 +113,9 @@ class YoutubeSummarizer:
     def send_email(self, email, channel_title, summaries):
         full_markdown = self.generate_email_content(channel_title, summaries)
 
-        self.email_service.send(email, f"🎬 [YouTube Summaries][{channel_title}] {self.email_subject_detail(summaries)}", full_markdown)
+        html_content = markdown.markdown(full_markdown)
+
+        self.email_service.send(email, f"🎬 [YouTube Summaries][{channel_title}] {self.email_subject_detail(summaries)}", html_content)
 
     def email_subject_detail(self, summaries):
         if len(summaries) == 1:
