@@ -32,6 +32,8 @@
 * [*] feat: generate email subject from content
 * [*] feat: convert the markdown to html for the email
 * [ ] feat: make it deployable on github actions with branch + env vars + use git as db
+* [ ] doc: update the README
+* [ ] deploy: deploy to github actions
 
 ## Parking
 * [ ] refactor: make methods private
@@ -39,5 +41,5 @@
 * [ ] test: test for edge and corner cases
 * [ ] test: setup TCR for fast flow, and try to help AI with this
 * [ ] test: migrate to pytest and replace @unitest.skip with @pytest.mark.slow
-* [ ] ~~deploy: setup a robust cron scheduler on my mac~~
+* [*] ~~deploy: setup a robust cron scheduler on my mac~~
 * [*] refactor: clean up the abstraction level in main

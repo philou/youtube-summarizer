@@ -4,7 +4,8 @@ import subprocess
 from faker import Faker
 from youtube_summarizer import main
 
-TEST_CHANNEL_ID = "UCoVoOvIX90IMEZCbBf_ycEA"
+# how to get a channel id: https://keywordrecon.com/articles/how-to-view-youtube-channel-id/
+TEST_CHANNEL_ID = "UC9V_-gqJsZNOy4v_HqbRz3w"
 
 class TestYouTubeSummarizerE2E(unittest.TestCase):
 
