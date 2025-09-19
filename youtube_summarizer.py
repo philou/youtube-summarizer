@@ -100,8 +100,12 @@ class YoutubeSummarizer:
         video_infos = [vi for vi in video_infos if not self.is_summary_file_present(channel_id, vi)]
         if max_summaries is not None:
             video_infos = video_infos[:max_summaries]
-        print(f"Summarizing {len(video_infos)} new videos...")
 
+        if len(video_infos) == 0:
+            print("No new videos to summarize.")
+            return
+
+        print(f"Summarizing {len(video_infos)} new videos...")
         summaries = []
         for video_info in video_infos:
             print(f"- Summarizing {video_info['title']} ({video_info['id']})\n")
@@ -113,11 +117,9 @@ class YoutubeSummarizer:
             summaries.append(summary)
 
         print(f"Sending summary email to {email}...")
-
         self.send_email(email, channel_title, summaries)
 
-        # review conditions, add channel_dir 
-        if commit_summaries and len(video_infos) > 0:
+        if commit_summaries:
             print("Committing summaries to git...")
             self.git_repo.commit_and_push(channel_id, f"Add summaries for {len(video_infos)} videos from channel {channel_title}")
 
