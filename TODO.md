@@ -34,6 +34,8 @@
 * [ ] feat: make it deployable on github actions with branch + env vars + use git as db
 * [ ] doc: update the README
 * [ ] deploy: deploy to github actions
+    * not sure there is a need to "push" on git, because it will run on github
+    * if need to push, then needs to setup upstream branch in test
 
 ## Parking
 * [ ] refactor: make methods private

@@ -26,7 +26,10 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         try:
             # Create and checkout test branch
             subprocess.run(['git', 'checkout', '-b', branch_name], check=True)
-            
+
+            # Push it upstream
+            subprocess.run(['git', 'push', '--set-upstream', 'origin', branch_name], check=True)
+
             # Run the test with git commits enabled
             sys.argv = ['main.py', TEST_CHANNEL_ID, "philippe.bourgau@gmail.com", "--git-commits-on", "2"]
             main()
