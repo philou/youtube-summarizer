@@ -40,6 +40,21 @@ class FakeEmailService:
             'body': body
         }
 
+class FakeGitRepository:
+    def __init__(self):
+        self.committed_folder = None
+        self.commit_message = None
+        self._commit_called = False
+
+    def commit_and_push(self, folder_path, commit_message):
+        self._commit_called = True
+        self.committed_folder = folder_path
+        self.commit_message = commit_message
+        return True
+
+    def commit_was_called(self):
+        return self._commit_called
+
 def build_video_ids(count):
     """Build a list of simple video IDs"""
     return [str(i) for i in range(1, count + 1)]
@@ -95,7 +110,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         content = ""
 
         with Patcher():
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService()).run(TEST_CHANNEL_ID, "user@example.com")
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService(), FakeGitRepository()).run(TEST_CHANNEL_ID, "user@example.com")
             content = self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[0])
             
         verify(content)
@@ -112,7 +127,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         summary2 = ""
 
         with Patcher():
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService()).run(TEST_CHANNEL_ID, "user@example.com")
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService(), FakeGitRepository()).run(TEST_CHANNEL_ID, "user@example.com")
             summary1 = self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[0])
             summary2 = self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[1])
 
@@ -131,7 +146,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
             existing_summary = "existing summary"
             self.write_summary_file(video_ids[0], existing_summary)
 
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService()).run(TEST_CHANNEL_ID, "user@example.com")
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService(), FakeGitRepository()).run(TEST_CHANNEL_ID, "user@example.com")
 
             self.assertTrue(self.is_summary_file_present(video_ids[1]))
             self.assertEqual(existing_summary, self.read_summary_md_file(TEST_CHANNEL_ID, video_ids[0]))
@@ -146,7 +161,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
                 body=generate_feed_for(video_ids))
 
         with Patcher() as patcher:
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService()).run(TEST_CHANNEL_ID, "user@example.com", 1)
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService(), FakeGitRepository()).run(TEST_CHANNEL_ID, "user@example.com", max_summaries=1)
 
             self.assertTrue(self.is_summary_file_present(video_ids[0]))
             self.assertFalse(self.is_summary_file_present(video_ids[1]))
@@ -162,7 +177,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         fakeEmailer = FakeEmailService()
 
         with Patcher() as patcher:
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "johndoe@example.com", 1)
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer, FakeGitRepository()).run(TEST_CHANNEL_ID, "johndoe@example.com")
 
         self.assertEqual('johndoe@example.com', fakeEmailer.sent_email['to'])
         verify(fakeEmailer.sent_email['body'])
@@ -178,7 +193,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         fakeEmailer = FakeEmailService()
 
         with Patcher() as patcher:
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "johndoe@example.com", 1)
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer, FakeGitRepository()).run(TEST_CHANNEL_ID, "johndoe@example.com")
 
         self.assertIn('<h1>', fakeEmailer.sent_email['body'])
 
@@ -193,7 +208,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         fakeEmailer = FakeEmailService()
 
         with Patcher() as patcher:
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "user@example.com")
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer, FakeGitRepository()).run(TEST_CHANNEL_ID, "user@example.com")
 
         verify(fakeEmailer.sent_email['body'])
 
@@ -208,7 +223,7 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         fakeEmailer = FakeEmailService()
 
         with Patcher() as patcher:
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "user@example.com")
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer, FakeGitRepository()).run(TEST_CHANNEL_ID, "user@example.com")
 
         self.assertEqual(
             "🎬 [YouTube Summaries][Dog Channel] 2 New Video Summaries Available",
@@ -225,11 +240,29 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         fakeEmailer = FakeEmailService()
 
         with Patcher() as patcher:
-            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer).run(TEST_CHANNEL_ID, "user@example.com")
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer, FakeGitRepository()).run(TEST_CHANNEL_ID, "user@example.com")
 
         self.assertEqual(
             f"🎬 [YouTube Summaries][Kitten Channel] {generate_title_for_video_id(video_ids[0])}",
             fakeEmailer.sent_email['subject'])
+
+    @responses.activate
+    def test_can_commit_summary_files_to_git(self):
+        """Test that summary files can be committed to git repository"""
+
+        video_ids = build_video_ids(2)
+        responses.get(channel_rss_url(TEST_CHANNEL_ID),
+                body=generate_feed_for(video_ids, "Tech Channel"))
+
+        fakeGitRepo = FakeGitRepository()
+
+        with Patcher() as patcher:
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), FakeEmailService(), fakeGitRepo).run(TEST_CHANNEL_ID, "user@example.com", commit_summaries=True)
+
+        # Verify git operations were called
+        self.assertTrue(fakeGitRepo.commit_was_called())
+        self.assertEqual(TEST_CHANNEL_ID, fakeGitRepo.committed_folder)
+        self.assertIn("Tech Channel", fakeGitRepo.commit_message)
 
     def is_summary_file_present(self, video_id):
         return os.path.exists(self.summary_file_path(TEST_CHANNEL_ID, video_id))

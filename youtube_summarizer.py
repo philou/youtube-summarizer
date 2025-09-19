@@ -31,6 +31,12 @@ class YoutubeTranscription:
         transcript = YouTubeTranscriptApi().fetch(video_id)
         return " ".join([entry['text'] for entry in transcript.to_raw_data()])
 
+class GitRepository:
+    def commit_and_push(self, folder_path, commit_message):
+        os.system(f"git add {folder_path}")
+        os.system(f'git commit -m "{commit_message}"')
+        os.system("git push")
+
 def channel_rss_url(channel_id):
     return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
 
@@ -84,7 +90,7 @@ class YoutubeSummarizer:
 
         return markdown_summary
 
-    def run(self, channel_id, email, max_summaries=None):
+    def run(self, channel_id, email, commit_summaries=False, max_summaries=None):
         rss_url = channel_rss_url(channel_id)
         channel_info = self.get_channel_title_and_video_infos(rss_url)
         channel_title = channel_info["title"]
@@ -109,6 +115,11 @@ class YoutubeSummarizer:
         print(f"Sending summary email to {email}...")
 
         self.send_email(email, channel_title, summaries)
+
+        # review conditions, add channel_dir 
+        if commit_summaries and len(video_infos) > 0:
+            print("Committing summaries to git...")
+            self.git_repo.commit_and_push(channel_id, f"Add summaries for {len(video_infos)} videos from channel {channel_title}")
 
     def send_email(self, email, channel_title, summaries):
         full_markdown = self.generate_email_content(channel_title, summaries)
@@ -152,10 +163,11 @@ class YoutubeSummarizer:
     def summary_file_name(self, video_info):
         return f"{video_info['id']}.md"
         
-    def __init__(self, summarizer, transcripter, email_service):
+    def __init__(self, summarizer, transcripter, email_service, git_repo):
         self.summarizer = summarizer
         self.transcript_service = transcripter
         self.email_service = email_service
+        self.git_repo = git_repo
 
 def main():
     try:
@@ -166,7 +178,8 @@ def main():
         YoutubeSummarizer(
             summarizer=Summarizer(api_key),
             transcripter=YoutubeTranscription(),
-            email_service=yagmail.SMTP(gmail_username, gmail_password)
+            email_service=yagmail.SMTP(gmail_username, gmail_password),
+            git_repo=GitRepository()
         ).run(channel_id, recipient_email, max_summaries)
 
     except Exception as e:
