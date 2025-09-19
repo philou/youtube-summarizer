@@ -31,7 +31,6 @@
 * [*] feat: When 3 or more summaries to share, create a summary of summaries
 * [*] feat: generate email subject from content
 * [*] feat: convert the markdown to html for the email
-* [ ] deploy: setup a robust cron scheduler on my mac
 * [ ] feat: make it deployable on github actions with branch + env vars + use git as db
 
 ## Parking
@@ -40,4 +39,5 @@
 * [ ] test: test for edge and corner cases
 * [ ] test: setup TCR for fast flow, and try to help AI with this
 * [ ] test: migrate to pytest and replace @unitest.skip with @pytest.mark.slow
+* [ ] ~~deploy: setup a robust cron scheduler on my mac~~
 * [*] refactor: clean up the abstraction level in main

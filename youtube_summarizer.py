@@ -9,6 +9,7 @@ import requests
 import xml.etree.ElementTree as ET
 import yagmail
 import markdown
+import subprocess
 
 class Summarizer:
     def __init__(self, api_key):
@@ -33,9 +34,14 @@ class YoutubeTranscription:
 
 class GitRepository:
     def commit_and_push(self, folder_path, commit_message):
-        os.system(f"git add {folder_path}")
-        os.system(f'git commit -m "{commit_message}"')
-        os.system("git push")
+        try:
+            subprocess.run(['git', 'add', folder_path], check=True)
+            subprocess.run(['git', 'commit', '-m', commit_message], check=True)
+            subprocess.run(['git', 'push'], check=True)
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"Git operation failed: {e}")
+            return False
 
 def channel_rss_url(channel_id):
     return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
@@ -173,35 +179,55 @@ class YoutubeSummarizer:
 
 def main():
     try:
-        channel_id, recipient_email, max_summaries = parse_arguments()
+        channel_id, recipient_email, max_summaries, git_commits_enabled = parse_arguments()
 
         api_key, gmail_username, gmail_password = load_environment_variables()
-        
+                
         YoutubeSummarizer(
             summarizer=Summarizer(api_key),
             transcripter=YoutubeTranscription(),
             email_service=yagmail.SMTP(gmail_username, gmail_password),
             git_repo=GitRepository()
-        ).run(channel_id, recipient_email, max_summaries)
+        ).run(channel_id, recipient_email, 
+              commit_summaries=git_commits_enabled, 
+              max_summaries=max_summaries)
 
     except Exception as e:
         sys.stderr.write(f"Unexpected error: {e}\n")
         sys.exit(1)
 
 def parse_arguments():
-    if len(sys.argv) < 3:
-        raise RuntimeError("Usage: python main.py <youtube_channel_id> <recipient_email>")
+    if len(sys.argv) < 4:
+        raise RuntimeError("Usage: python main.py <youtube_channel_id> <recipient_email> <--git-commits-on|--git-commits-off> [max_summaries]")
+
     channel_id = sys.argv[1]
     if not channel_id or len(channel_id) != 24 or not channel_id.startswith("UC"):
         raise RuntimeError("Invalid YouTube channel ID.")
+
     recipient_email = sys.argv[2]
     if not recipient_email:
         raise RuntimeError("Invalid recipient email.")
 
+    git_arg = sys.argv[3]
+    if git_arg == "--git-commits-on":
+        git_commits_enabled = True
+    elif git_arg == "--git-commits-off":
+        git_commits_enabled = False
+    else:
+        raise RuntimeError("Third argument must be --git-commits-on or --git-commits-off")
+
     max_summaries = None
-    if len(sys.argv) > 3:
-        max_summaries = int(sys.argv[3])
-    return channel_id,recipient_email,max_summaries
+    if len(sys.argv) == 5:
+        try:
+            max_summaries = int(sys.argv[4])
+            if max_summaries < 1:
+                raise ValueError()
+        except ValueError:
+            raise RuntimeError("max_summaries must be a positive integer")
+    elif len(sys.argv) > 5:
+        raise RuntimeError("Too many arguments. Expected at most 4 arguments.")
+
+    return channel_id, recipient_email, max_summaries, git_commits_enabled
 
 def load_environment_variables():
     load_dotenv()
