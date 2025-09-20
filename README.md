@@ -116,7 +116,7 @@ python youtube_summarizer.py UC_CHANNEL_ID user@example.com --git-commits-on 5
 
 ### GitHub Actions Deployment
 
-For automated daily runs, see the [GitHub Actions setup guide](GITHUB_ACTIONS_SETUP.md) (if created) or set up branches with the `channel-` prefix for automatic scheduling.
+For automated daily runs, see the [GitHub Actions setup guide](GITHUB_ACTIONS_SETUP.md).
 
 ## 📧 Email Features
 
