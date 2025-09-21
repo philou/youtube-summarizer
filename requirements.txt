@@ -1,5 +1,6 @@
 youtube-transcript-api
 openai
+python-dotenv
 faker
 responses
 pyfakefs
