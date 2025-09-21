@@ -14,8 +14,6 @@ on:
 
 jobs:
   summarize:
-    # Only run on branches that start with 'channel-'
-    if: startsWith(github.ref_name, 'channel-')
     runs-on: ubuntu-latest
     
     steps:
