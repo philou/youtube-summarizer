@@ -33,10 +33,21 @@
 * [*] feat: convert the markdown to html for the email
 * [*] feat: make it deployable on github actions with branch + env vars + use git as db
 * [*] doc: update the README
-* [ ] deploy: deploy to github actions
+* [*] deploy: deploy to github actions
     * not sure there is a need to "push" on git, because it will run on github
     * if need to push, then needs to setup upstream branch in test
     * [*] check cost
+    * FAILING because Youtube Transcript Downloader fails from github actions!
+* [ ] deploy: setup a robust cron scheduler on my mac
+    * [ ] Update the DECISION_LOG
+    * [ ] Update the readme and update the docs related to github action setup
+    * Anacron no longer supported for mac, cron does not work when machine shut down -> launchd (https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often?rq=1)
+    * [ ] Setup launchd
+* [ ] Add another provider of video to deal with 15 limit in feed
+    * ~~[ ] use youtube api~~
+    * ~~[ ] Scrap html, or xslt~~
+    * [*] Use archive.org to rebuilt a fake feed, and provide a "file input"
+    * [ ] Take in a local feed file as argument
 
 ## Parking
 * [ ] refactor: make methods private
@@ -44,5 +55,4 @@
 * [ ] test: test for edge and corner cases
 * [ ] test: setup TCR for fast flow, and try to help AI with this
 * [ ] test: migrate to pytest and replace @unitest.skip with @pytest.mark.slow
-* [*] ~~deploy: setup a robust cron scheduler on my mac~~
 * [*] refactor: clean up the abstraction level in main
