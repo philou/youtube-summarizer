@@ -11,8 +11,7 @@ This project automates the process of collecting and summarizing YouTube videos 
 * **Save results** as markdown files in channel-specific folders
 * **Email notifications** with HTML-formatted summaries
 * **Git integration** for automatic commits and version history
-* **GitHub Actions deployment** for automated daily runs
-* **Multi-channel support** via branch-based deployment strategy
+* **Local scheduling** via cron or task scheduler
 
 ## 🛠 Tech Stack & Tools
 
@@ -22,7 +21,6 @@ This project automates the process of collecting and summarizing YouTube videos 
 * **yagmail**: simplified Gmail integration for email notifications
 * **GitPython**: for automatic git commits and version control
 * **Markdown**: for HTML email formatting
-* **GitHub Actions**: for automated scheduling and deploymentummarizer (Python, Local, CSV)
 
 This project automates the process of collecting and summarizing YouTube videos from a channel’s RSS feed. It downloads video transcripts using Python, summarizes them, and saves the results into a local CSV file. You can run the script manually or schedule it (e.g. with cron).
 
@@ -114,9 +112,18 @@ python youtube_summarizer.py UC_CHANNEL_ID user@example.com --git-commits-on
 python youtube_summarizer.py UC_CHANNEL_ID user@example.com --git-commits-on 5
 ```
 
-### GitHub Actions Deployment
+### Automated Scheduling
 
-For automated daily runs, see the [GitHub Actions setup guide](GITHUB_ACTIONS_SETUP.md).
+For automated daily runs, you can use:
+
+**On macOS/Linux (cron):**
+```bash
+# Add to your crontab (run daily at 9 AM)
+0 9 * * * cd /path/to/youtube-summarizer && python youtube_summarizer.py UC_CHANNEL_ID user@example.com --git-commits-on
+```
+
+**On Windows (Task Scheduler):**
+Create a scheduled task to run the Python script daily.
 
 ## 📧 Email Features
 
@@ -161,17 +168,24 @@ pytest -m "not slow"
 - **GitRepository**: Version control integration
 - **Email Service**: HTML email notifications via Gmail
 
-## � Deployment Options
+## 📋 Deployment Options
 
-### Option 1: Local Cron (Traditional)
-Schedule the script to run locally using cron or task scheduler.
+### Local Cron (Recommended)
+Schedule the script to run locally using cron (Unix/macOS) or Task Scheduler (Windows).
 
-### Option 2: GitHub Actions (Recommended)
-- **Zero server maintenance**: GitHub handles infrastructure
-- **Branch-based channels**: Each YouTube channel gets its own branch
-- **Automatic scheduling**: Daily runs via GitHub's cron
-- **Built-in persistence**: Git serves as the database
-- **Cost effective**: Works on GitHub's free tier
+**Advantages:**
+- Simple setup and maintenance
+- Direct access to local git repository
+- No cloud service restrictions
+- Full control over scheduling
+
+**Setup:**
+```bash
+# Add to crontab for daily execution at 9 AM
+crontab -e
+# Add this line:
+0 9 * * * cd /path/to/youtube-summarizer && python youtube_summarizer.py UC_CHANNEL_ID user@example.com --git-commits-on
+```
 
 ## Design Choice: Git as Database
 

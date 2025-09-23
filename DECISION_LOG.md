@@ -17,8 +17,6 @@ Use a local Python script to fetch YouTube video transcripts, summarize them, an
 
 ## 2025-09-19: Deploy through git branches and github actions
 
-## 2025-09-19: Deploy through git branches and github actions
-
 **Decision:**
 Deploy the YouTube summarizer using GitHub Actions with channel-specific branches for scheduling and git as persistent storage, with git operations handled in Python code.
 
@@ -49,3 +47,31 @@ Deploy the YouTube summarizer using GitHub Actions with channel-specific branche
 - Need to handle git authentication and error scenarios in code
 - Dependency on GitHub availability for the automation
 - Limited to GitHub's action runtime limits (though sufficient for this use case)
+
+## 2025-09-23: Remove GitHub Actions Deployment Due to YouTube API Restrictions
+
+**Decision:**
+Remove GitHub Actions deployment feature and revert to local-only execution with cron scheduling.
+
+**Rationale:**
+- **YouTube API Restrictions**: YouTube blocks the `youtube-transcript-api` library when accessed from cloud providers like GitHub Actions to prevent flooding and abuse
+- **Simplicity**: Local execution eliminates cloud provider restrictions and simplifies deployment
+- **Direct Access**: Local machines can access YouTube transcripts without the restrictions imposed on cloud IPs
+
+**Implementation Changes:**
+- Removed GitHub Actions workflow files
+- Updated README to focus on local cron scheduling
+- Deleted GITHUB_ACTIONS_SETUP.md guide
+- Simplified deployment to single local option
+
+**Alternatives considered:**
+- **Proxy services**: Too complex and potentially unreliable
+- **Different cloud providers**: All major providers face similar YouTube restrictions
+- **VPN/IP rotation**: Against YouTube's terms of service
+
+**Trade-offs:**
+- Requires always-on local machine for automation
+- No built-in redundancy or cloud backup of execution
+- Manual setup required on each target machine
+- Still maintains git-based persistence for summary storage
+
