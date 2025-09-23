@@ -88,6 +88,7 @@ def generate_feed_for(video_ids, channel_title = "My Channel"):
     return f'''<?xml version="1.0" encoding="UTF-8"?>
             <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
                 <title>{channel_title}</title>
+                <yt:channelId>{TEST_CHANNEL_ID}</yt:channelId>
                 {''.join(entries)}
             </feed>'''
 
@@ -263,6 +264,23 @@ class TestYouTubeSummarizerE2E(unittest.TestCase):
         self.assertTrue(fakeGitRepo.commit_was_called())
         self.assertEqual(TEST_CHANNEL_ID, fakeGitRepo.committed_folder)
         self.assertIn("Tech Channel", fakeGitRepo.commit_message)
+
+    def test_can_work_on_local_feed_file(self):
+        """Test that it can work on a local feed file"""
+
+        video_ids = build_video_ids(1)
+        feed_content = generate_feed_for(video_ids, "Local Channel")
+
+        fakeEmailer = FakeEmailService()
+
+        with Patcher() as patcher:
+            feed_file = "local_feed.xml"
+            with open(feed_file, 'w') as f:
+                f.write(feed_content)
+
+            YoutubeSummarizer(FakeSummarizer(), FakeTranscription(), fakeEmailer, FakeGitRepository()).run(feed_file, "user@example.com")
+
+            self.assertTrue(self.is_summary_file_present(video_ids[0]))
 
     def is_summary_file_present(self, video_id):
         return os.path.exists(self.summary_file_path(TEST_CHANNEL_ID, video_id))

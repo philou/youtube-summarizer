@@ -43,11 +43,11 @@
     * [ ] Update the readme and update the docs related to github action setup
     * Anacron no longer supported for mac, cron does not work when machine shut down -> launchd (https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often?rq=1)
     * [ ] Setup launchd
-* [ ] Add another provider of video to deal with 15 limit in feed
+* [*] Add another provider of video to deal with 15 limit in feed
     * ~~[ ] use youtube api~~
     * ~~[ ] Scrap html, or xslt~~
     * [*] Use archive.org to rebuilt a fake feed, and provide a "file input"
-    * [ ] Take in a local feed file as argument
+    * [*] Take in a local feed file as argument
 
 ## Parking
 * [ ] refactor: make methods private

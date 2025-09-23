@@ -47,13 +47,17 @@ def channel_rss_url(channel_id):
     return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
 
 class YoutubeSummarizer:
-    def get_channel_title_and_video_infos(self, rss_url):
-        """Fetch channel title and all video infos from a YouTube channel RSS feed URL."""
+    def get_channel_title_and_videos_infos_from_xml(self, xml_feed_string):
+        """Extract channel title, video infos, and channel ID from XML root element."""
         try:
-            resp = requests.get(rss_url)
-            resp.raise_for_status()
-            root = ET.fromstring(resp.content)
+            root = ET.fromstring(xml_feed_string)
             ns = {'yt': 'http://www.youtube.com/xml/schemas/2015', 'atom': 'http://www.w3.org/2005/Atom'}
+
+            # Extract channel ID from the RSS feed
+            channel_id_elem = root.find('yt:channelId', ns)
+            if channel_id_elem is None:
+                raise ValueError("No channelId found in RSS feed.")
+            channel_id = channel_id_elem.text
 
             # Channel title is the <title> directly under <feed>
             channel_title_elem = root.find('atom:title', ns)
@@ -82,10 +86,31 @@ class YoutubeSummarizer:
                     "url": f"https://www.youtube.com/watch?v={video_id_elem.text}"
                 })
 
-            return {"title": channel_title, "video_infos": video_infos}
+            return {"title": channel_title, "video_infos": video_infos, "channel_id": channel_id}
         
         except Exception as e:
-            raise RuntimeError(f"Failed to parse RSS feed: {e}")
+            raise RuntimeError(f"Failed to parse RSS feed XML: {e}")
+
+    def get_channel_feed_xml_string(self, channel_id_or_file_path):
+        """Get XML feed string either from local file or by fetching from URL."""
+
+        if channel_id_or_file_path.endswith(".xml") and os.path.isfile(channel_id_or_file_path):
+
+            print(f"Processing local RSS feed file: {channel_id_or_file_path}")
+            with open(channel_id_or_file_path, 'r', encoding='utf-8') as f:
+                xml_feed_string = f.read()
+
+        elif channel_id_or_file_path.startswith("UC") and len(channel_id_or_file_path) == 24:
+
+            rss_url = channel_rss_url(channel_id_or_file_path)
+            resp = requests.get(rss_url)
+            resp.raise_for_status()
+            xml_feed_string = resp.content
+
+        else:
+            raise RuntimeError(f"Invalid input: '{channel_id_or_file_path}'. Expected either a YouTube channel ID (starts with 'UC' and 24 characters long) or an XML file path (ends with '.xml').")
+        
+        return xml_feed_string
 
     def summarize_video(self, transcript, video_info):
         summary = self.summarizer.summarize_text(transcript)
@@ -96,11 +121,17 @@ class YoutubeSummarizer:
 
         return markdown_summary
 
-    def run(self, channel_id, email, commit_summaries=False, max_summaries=None):
-        rss_url = channel_rss_url(channel_id)
-        channel_info = self.get_channel_title_and_video_infos(rss_url)
+
+    def run(self, channel_id_or_file_path, email, commit_summaries=False, max_summaries=None):
+        # Get XML feed string from either local file or URL
+        xml_feed_string = self.get_channel_feed_xml_string(channel_id_or_file_path)
+        
+        # Extract common data from channel_info
+        channel_info = self.get_channel_title_and_videos_infos_from_xml(xml_feed_string)
+        channel_id = channel_info["channel_id"]
         channel_title = channel_info["title"]
         video_infos = channel_info["video_infos"]
+        
         print(f"Found {len(video_infos)} videos in channel {channel_id}.")
 
         video_infos = [vi for vi in video_infos if not self.is_summary_file_present(channel_id, vi)]
@@ -179,7 +210,7 @@ class YoutubeSummarizer:
 
 def main():
     try:
-        channel_id, recipient_email, max_summaries, git_commits_enabled = parse_arguments()
+        channel_id_or_file_path, recipient_email, max_summaries, git_commits_enabled = parse_arguments()
 
         api_key, gmail_username, gmail_password = load_environment_variables()
                 
@@ -188,7 +219,7 @@ def main():
             transcripter=YoutubeTranscription(),
             email_service=yagmail.SMTP(gmail_username, gmail_password),
             git_repo=GitRepository()
-        ).run(channel_id, recipient_email, 
+        ).run(channel_id_or_file_path, recipient_email, 
               commit_summaries=git_commits_enabled, 
               max_summaries=max_summaries)
 
@@ -198,11 +229,11 @@ def main():
 
 def parse_arguments():
     if len(sys.argv) < 4:
-        raise RuntimeError("Usage: python main.py <youtube_channel_id> <recipient_email> <--git-commits-on|--git-commits-off> [max_summaries]")
+        raise RuntimeError("Usage: python main.py <youtube_channel_id_or_file_path> <recipient_email> <--git-commits-on|--git-commits-off> [max_summaries]")
 
-    channel_id = sys.argv[1]
-    if not channel_id or len(channel_id) != 24 or not channel_id.startswith("UC"):
-        raise RuntimeError("Invalid YouTube channel ID.")
+    channel_id_or_file_path = sys.argv[1]
+    if not channel_id_or_file_path:
+        raise RuntimeError("Invalid channel ID or file path.")
 
     recipient_email = sys.argv[2]
     if not recipient_email:
@@ -227,7 +258,7 @@ def parse_arguments():
     elif len(sys.argv) > 5:
         raise RuntimeError("Too many arguments. Expected at most 4 arguments.")
 
-    return channel_id, recipient_email, max_summaries, git_commits_enabled
+    return channel_id_or_file_path, recipient_email, max_summaries, git_commits_enabled
 
 def load_environment_variables():
     load_dotenv()
