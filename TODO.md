@@ -38,21 +38,22 @@
     * if need to push, then needs to setup upstream branch in test
     * [*] check cost
     * FAILING because Youtube Transcript Downloader fails from github actions!
-* [ ] deploy: setup a robust cron scheduler on my mac
-    * [*] Update the DECISION_LOG
-    * [*] Update the readme and update the docs related to github action setup
-    * Anacron no longer supported for mac, cron does not work when machine shut down -> launchd (https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often?rq=1)
-    * [ ] Setup launchd
 * [*] Add another provider of video to deal with 15 limit in feed
     * ~~[ ] use youtube api~~
     * ~~[ ] Scrap html, or xslt~~
     * [*] Use archive.org to rebuilt a fake feed, and provide a "file input"
     * [*] Take in a local feed file as argument
-
-## Parking
+* [*] Fix a bug of feed not having the "UC" in the channel ID field
+* [ ] deploy: setup a robust cron scheduler on my mac
+    * [*] Update the DECISION_LOG
+    * [*] Update the readme and update the docs related to github action setup
+    * Anacron no longer supported for mac, cron does not work when machine shut down -> launchd (https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often?rq=1)
+    * [ ] Setup launchd
 * [ ] refactor: make methods private
 * [ ] refactor: rename the test in test_youtout_summarizer.py
 * [ ] build: setup a CI
+
+## Parking
 * [ ] test: test for edge and corner cases
 * [ ] test: setup TCR for fast flow, and try to help AI with this
 * [ ] test: migrate to pytest and replace @unitest.skip with @pytest.mark.slow

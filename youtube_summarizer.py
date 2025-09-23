@@ -57,7 +57,7 @@ class YoutubeSummarizer:
             channel_id_elem = root.find('yt:channelId', ns)
             if channel_id_elem is None:
                 raise ValueError("No channelId found in RSS feed.")
-            channel_id = channel_id_elem.text
+            channel_id = "UC" + channel_id_elem.text
 
             # Channel title is the <title> directly under <feed>
             channel_title_elem = root.find('atom:title', ns)

@@ -85,10 +85,15 @@ def generate_feed_for(video_ids, channel_title = "My Channel"):
                         <published>{published}</published>
                     </entry>''')
     
+    # Ensure TEST_CHANNEL_ID starts with "UC" then remove first two chars
+    if not TEST_CHANNEL_ID.startswith("UC"):
+        raise ValueError('TEST_CHANNEL_ID must start with "UC"')
+    channel_id_no_uc = TEST_CHANNEL_ID[2:]
+
     return f'''<?xml version="1.0" encoding="UTF-8"?>
             <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
                 <title>{channel_title}</title>
-                <yt:channelId>{TEST_CHANNEL_ID}</yt:channelId>
+                <yt:channelId>{channel_id_no_uc}</yt:channelId>
                 {''.join(entries)}
             </feed>'''
 
