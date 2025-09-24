@@ -49,7 +49,7 @@
     * [*] Update the readme and update the docs related to github action setup
     * Anacron no longer supported for mac, cron does not work when machine shut down -> launchd (https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often?rq=1)
     * [ ] Setup launchd
-* [ ] refactor: make methods private
+* [*] refactor: make methods private
 * [ ] refactor: rename the test in test_youtout_summarizer.py
 * [ ] build: setup a CI
 

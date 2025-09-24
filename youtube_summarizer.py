@@ -47,7 +47,73 @@ def channel_rss_url(channel_id):
     return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
 
 class YoutubeSummarizer:
-    def get_channel_title_and_videos_infos_from_xml(self, xml_feed_string):
+        
+    def __init__(self, summarizer, transcripter, email_service, git_repo):
+        self.summarizer = summarizer
+        self.transcript_service = transcripter
+        self.email_service = email_service
+        self.git_repo = git_repo
+
+    def run(self, channel_id_or_file_path, email, commit_summaries=False, max_summaries=None):
+        # Get XML feed string from either local file or URL
+        xml_feed_string = self.__get_channel_feed_xml_string(channel_id_or_file_path)
+        
+        # Extract common data from channel_info
+        channel_info = self.__get_channel_title_and_videos_infos_from_xml(xml_feed_string)
+        channel_id = channel_info["channel_id"]
+        channel_title = channel_info["title"]
+        video_infos = channel_info["video_infos"]
+        
+        print(f"Found {len(video_infos)} videos in channel {channel_id}.")
+
+        video_infos = [vi for vi in video_infos if not self.__is_summary_file_present(channel_id, vi)]
+        if max_summaries is not None:
+            video_infos = video_infos[:max_summaries]
+
+        if len(video_infos) == 0:
+            print("No new videos to summarize.")
+            return
+
+        print(f"Summarizing {len(video_infos)} new videos...")
+        summaries = []
+        for video_info in video_infos:
+            print(f"- Summarizing {video_info['title']} ({video_info['id']})\n")
+
+            transcript = self.transcript_service.fetch(video_info["id"])
+            summary = self.__summarize_video(transcript, video_info)
+            self.__write_file(channel_id, video_info, summary)
+
+            summaries.append(summary)
+
+        print(f"Sending summary email to {email}...")
+        self.__send_email(email, channel_title, summaries)
+
+        if commit_summaries:
+            print("Committing summaries to git...")
+            self.git_repo.commit_and_push(channel_id, f"Add summaries for {len(video_infos)} videos from channel {channel_title}")
+
+    def __get_channel_feed_xml_string(self, channel_id_or_file_path):
+        """Get XML feed string either from local file or by fetching from URL."""
+
+        if channel_id_or_file_path.endswith(".xml") and os.path.isfile(channel_id_or_file_path):
+
+            print(f"Processing local RSS feed file: {channel_id_or_file_path}")
+            with open(channel_id_or_file_path, 'r', encoding='utf-8') as f:
+                xml_feed_string = f.read()
+
+        elif channel_id_or_file_path.startswith("UC") and len(channel_id_or_file_path) == 24:
+
+            rss_url = channel_rss_url(channel_id_or_file_path)
+            resp = requests.get(rss_url)
+            resp.raise_for_status()
+            xml_feed_string = resp.content
+
+        else:
+            raise RuntimeError(f"Invalid input: '{channel_id_or_file_path}'. Expected either a YouTube channel ID (starts with 'UC' and 24 characters long) or an XML file path (ends with '.xml').")
+        
+        return xml_feed_string
+
+    def __get_channel_title_and_videos_infos_from_xml(self, xml_feed_string):
         """Extract channel title, video infos, and channel ID from XML root element."""
         try:
             root = ET.fromstring(xml_feed_string)
@@ -91,28 +157,8 @@ class YoutubeSummarizer:
         except Exception as e:
             raise RuntimeError(f"Failed to parse RSS feed XML: {e}")
 
-    def get_channel_feed_xml_string(self, channel_id_or_file_path):
-        """Get XML feed string either from local file or by fetching from URL."""
 
-        if channel_id_or_file_path.endswith(".xml") and os.path.isfile(channel_id_or_file_path):
-
-            print(f"Processing local RSS feed file: {channel_id_or_file_path}")
-            with open(channel_id_or_file_path, 'r', encoding='utf-8') as f:
-                xml_feed_string = f.read()
-
-        elif channel_id_or_file_path.startswith("UC") and len(channel_id_or_file_path) == 24:
-
-            rss_url = channel_rss_url(channel_id_or_file_path)
-            resp = requests.get(rss_url)
-            resp.raise_for_status()
-            xml_feed_string = resp.content
-
-        else:
-            raise RuntimeError(f"Invalid input: '{channel_id_or_file_path}'. Expected either a YouTube channel ID (starts with 'UC' and 24 characters long) or an XML file path (ends with '.xml').")
-        
-        return xml_feed_string
-
-    def summarize_video(self, transcript, video_info):
+    def __summarize_video(self, transcript, video_info):
         summary = self.summarizer.summarize_text(transcript)
 
         markdown_summary = f"# {video_info['title']}\n\n"
@@ -121,47 +167,8 @@ class YoutubeSummarizer:
 
         return markdown_summary
 
-
-    def run(self, channel_id_or_file_path, email, commit_summaries=False, max_summaries=None):
-        # Get XML feed string from either local file or URL
-        xml_feed_string = self.get_channel_feed_xml_string(channel_id_or_file_path)
-        
-        # Extract common data from channel_info
-        channel_info = self.get_channel_title_and_videos_infos_from_xml(xml_feed_string)
-        channel_id = channel_info["channel_id"]
-        channel_title = channel_info["title"]
-        video_infos = channel_info["video_infos"]
-        
-        print(f"Found {len(video_infos)} videos in channel {channel_id}.")
-
-        video_infos = [vi for vi in video_infos if not self.is_summary_file_present(channel_id, vi)]
-        if max_summaries is not None:
-            video_infos = video_infos[:max_summaries]
-
-        if len(video_infos) == 0:
-            print("No new videos to summarize.")
-            return
-
-        print(f"Summarizing {len(video_infos)} new videos...")
-        summaries = []
-        for video_info in video_infos:
-            print(f"- Summarizing {video_info['title']} ({video_info['id']})\n")
-
-            transcript = self.transcript_service.fetch(video_info["id"])
-            summary = self.summarize_video(transcript, video_info)
-            self.write_file(channel_id, video_info, summary)
-
-            summaries.append(summary)
-
-        print(f"Sending summary email to {email}...")
-        self.send_email(email, channel_title, summaries)
-
-        if commit_summaries:
-            print("Committing summaries to git...")
-            self.git_repo.commit_and_push(channel_id, f"Add summaries for {len(video_infos)} videos from channel {channel_title}")
-
-    def send_email(self, email, channel_title, summaries):
-        full_markdown = self.generate_email_content(channel_title, summaries)
+    def __send_email(self, email, channel_title, summaries):
+        full_markdown = self.__generate_email_content(channel_title, summaries)
 
         html_content = markdown.markdown(full_markdown)
 
@@ -174,7 +181,7 @@ class YoutubeSummarizer:
         
         return f"{len(summaries)} New Video Summaries Available"
 
-    def generate_email_content(self, channel_title, summaries):
+    def __generate_email_content(self, channel_title, summaries):
         combined_md = [f"#{md}" for md in summaries]
         summaries_markdown = "\n\n".join(combined_md).strip()
         full_markdown = ""
@@ -187,26 +194,20 @@ class YoutubeSummarizer:
 
         return full_markdown
 
-    def is_summary_file_present(self, channel_id, video_info):
-        return os.path.exists(self.summary_file_path(channel_id, video_info))
+    def __is_summary_file_present(self, channel_id, video_info):
+        return os.path.exists(self.__summary_file_path(channel_id, video_info))
 
-    def summary_file_path(self, channel_id, video_info):
-        return os.path.join(channel_id, self.summary_file_name(video_info))
+    def __summary_file_path(self, channel_id, video_info):
+        return os.path.join(channel_id, self.__summary_file_name(video_info))
 
-    def write_file(self, channel_id, video_info, summary):
+    def __write_file(self, channel_id, video_info, summary):
         os.makedirs(channel_id, exist_ok=True)
-        summary_file_path = os.path.join(channel_id, self.summary_file_name(video_info))
+        summary_file_path = os.path.join(channel_id, self.__summary_file_name(video_info))
         with open(summary_file_path, 'w') as f:
             f.write(summary)
 
-    def summary_file_name(self, video_info):
+    def __summary_file_name(self, video_info):
         return f"{video_info['id']}.md"
-        
-    def __init__(self, summarizer, transcripter, email_service, git_repo):
-        self.summarizer = summarizer
-        self.transcript_service = transcripter
-        self.email_service = email_service
-        self.git_repo = git_repo
 
 def main():
     try:
