@@ -50,10 +50,10 @@
     * Anacron no longer supported for mac, cron does not work when machine shut down -> launchd (https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often?rq=1)
     * [ ] Setup launchd
 * [*] refactor: make methods private
-* [ ] refactor: rename the test in test_youtout_summarizer.py
-* [ ] build: setup a CI
+* [*] refactor: rename the test in test_youtout_summarizer.py
 
 ## Parking
+* [ ] build: setup a CI
 * [ ] test: test for edge and corner cases
 * [ ] test: setup TCR for fast flow, and try to help AI with this
 * [ ] test: migrate to pytest and replace @unitest.skip with @pytest.mark.slow
