@@ -97,7 +97,7 @@ def generate_feed_for(video_ids, channel_title = "My Channel"):
                 {''.join(entries)}
             </feed>'''
 
-class TestYouTubeSummarizerE2E(unittest.TestCase):
+class TestYouTubeSummarizer(unittest.TestCase):
 
     def setUp(self):
         responses.reset()
