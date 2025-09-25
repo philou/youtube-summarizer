@@ -44,13 +44,14 @@
     * [*] Use archive.org to rebuilt a fake feed, and provide a "file input"
     * [*] Take in a local feed file as argument
 * [*] Fix a bug of feed not having the "UC" in the channel ID field
+* [*] refactor: make methods private
+* [*] refactor: rename the test in test_youtout_summarizer.py
 * [ ] deploy: setup a robust cron scheduler on my mac
     * [*] Update the DECISION_LOG
     * [*] Update the readme and update the docs related to github action setup
     * Anacron no longer supported for mac, cron does not work when machine shut down -> launchd (https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often?rq=1)
+    * [ ] WAIT one week to see if Youtube Ban is lifted
     * [ ] Setup launchd
-* [*] refactor: make methods private
-* [*] refactor: rename the test in test_youtout_summarizer.py
 
 ## Parking
 * [ ] build: setup a CI
