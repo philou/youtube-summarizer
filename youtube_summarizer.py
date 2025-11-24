@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 import yagmail
 import markdown
 import subprocess
+import time
 
 class Summarizer:
     def __init__(self, api_key):
@@ -48,11 +49,12 @@ def channel_rss_url(channel_id):
 
 class YoutubeSummarizer:
         
-    def __init__(self, summarizer, transcripter, email_service, git_repo):
+    def __init__(self, summarizer, transcripter, email_service, git_repo, wait_between_requests=30):
         self.summarizer = summarizer
         self.transcript_service = transcripter
         self.email_service = email_service
         self.git_repo = git_repo
+        self.wait_between_requests = wait_between_requests
 
     def run(self, channel_id_or_file_path, email, commit_summaries=False, max_summaries=None):
         # Get XML feed string from either local file or URL
@@ -84,6 +86,9 @@ class YoutubeSummarizer:
             self.__write_file(channel_id, video_info, summary)
 
             summaries.append(summary)
+
+            # pause between requests to avoid rate limiting
+            time.sleep(self.wait_between_requests)
 
         print(f"Sending summary email to {email}...")
         self.__send_email(email, channel_title, summaries)

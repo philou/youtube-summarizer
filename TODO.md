@@ -46,6 +46,8 @@
 * [*] Fix a bug of feed not having the "UC" in the channel ID field
 * [*] refactor: make methods private
 * [*] refactor: rename the test in test_youtout_summarizer.py
+* [*] feat: add a pause between transcript request to avoid rate limiting
+* [ ] spike: rewrite to Gemini + Google Apps Scripts + js. Gemini can do the transcription + summary natively!
 * [ ] deploy: setup a robust cron scheduler on my mac
     * [*] Update the DECISION_LOG
     * [*] Update the readme and update the docs related to github action setup
